@@ -1,0 +1,30 @@
+{
+  "name": "andru",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --experimental-sqlite --import tsx src/main.ts",
+    "start": "node --experimental-sqlite --import tsx src/main.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-sqlite ./node_modules/vitest/vitest.mjs run",
+    "test:watch": "node --experimental-sqlite ./node_modules/vitest/vitest.mjs"
+  },
+  "dependencies": {
+    "@google/genai": "^2.22.0",
+    "@hono/node-server": "^1.14.1",
+    "dotenv": "^16.5.0",
+    "hono": "^4.7.7",
+    "openai": "^4.96.0",
+    "zod": "^3.24.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.1",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.3",
+    "vitest": "^3.1.2"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true
+  }
+}

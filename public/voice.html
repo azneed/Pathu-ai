@@ -1,0 +1,1749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Andru Voice</title>
+  <style>
+    :root {
+      --bg: #12151a;
+      --panel: #1b2129;
+      --text: #e8eef5;
+      --muted: #93a0b0;
+      --accent: #3d8bfd;
+      --danger: #d95c5c;
+      --ok: #3fad7a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: radial-gradient(1200px 600px at 50% -10%, #243041 0%, var(--bg) 55%);
+      color: var(--text);
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+    main {
+      width: min(520px, 100%);
+      background: var(--panel);
+      border: 1px solid #2c3542;
+      border-radius: 16px;
+      padding: 28px 24px 22px;
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+    }
+    h1 {
+      margin: 0 0 4px;
+      font-size: 1.7rem;
+      letter-spacing: 0.02em;
+    }
+    .subtitle {
+      margin: 0 0 22px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    .mic-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    #micBtn {
+      width: 96px;
+      height: 96px;
+      border-radius: 50%;
+      border: 0;
+      background: var(--accent);
+      color: white;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      user-select: none;
+      touch-action: none;
+      transition: transform 0.12s ease, background 0.12s ease, box-shadow 0.12s ease;
+      box-shadow: 0 8px 24px rgba(61, 139, 253, 0.35);
+    }
+    #micBtn:hover { transform: translateY(-1px); }
+    #micBtn.listening {
+      background: var(--danger);
+      box-shadow: 0 8px 24px rgba(217, 92, 92, 0.4);
+      transform: scale(1.04);
+    }
+    #micBtn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    .hint {
+      color: var(--muted);
+      font-size: 0.85rem;
+      text-align: center;
+    }
+    .block {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      background: #141a21;
+      border: 1px solid #2a3340;
+    }
+    .label {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--muted);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .value {
+      min-height: 1.4em;
+      white-space: pre-wrap;
+      line-height: 1.45;
+    }
+    #status {
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 0.9rem;
+      min-height: 1.3em;
+    }
+    #status.error { color: var(--danger); }
+    #status.ok { color: var(--ok); }
+    .actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .actions button, .fallback button {
+      border: 1px solid #334155;
+      background: #222a35;
+      color: var(--text);
+      border-radius: 8px;
+      padding: 8px 12px;
+      cursor: pointer;
+    }
+    .actions button:hover, .fallback button:hover { background: #2a3340; }
+    .fallback {
+      margin-top: 16px;
+      display: none;
+      gap: 8px;
+    }
+    .fallback.visible { display: flex; }
+    .fallback input {
+      flex: 1;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      background: #141a21;
+      color: var(--text);
+      padding: 8px 10px;
+    }
+    .voice-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-top: 16px;
+    }
+    .voice-row label {
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+    #voiceSelect {
+      flex: 1;
+      min-width: 180px;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      background: #141a21;
+      color: var(--text);
+      padding: 8px 10px;
+    }
+    #testVoiceBtn {
+      border: 1px solid #334155;
+      background: #222a35;
+      color: var(--text);
+      border-radius: 8px;
+      padding: 8px 12px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    #testVoiceBtn:hover { background: #2a3340; }
+    .yt-section {
+      margin-top: 16px;
+      padding: 12px;
+      border-radius: 10px;
+      background: #141a21;
+      border: 1px solid #2a3340;
+    }
+    .yt-section .label { margin-bottom: 8px; }
+    #ytPlayerHost {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #0b0e12;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    #ytMeta {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 0.85rem;
+      min-height: 1.2em;
+    }
+    #ytEnableBtn {
+      margin-top: 8px;
+      border: 1px solid #334155;
+      background: #222a35;
+      color: var(--text);
+      border-radius: 8px;
+      padding: 8px 12px;
+      cursor: pointer;
+      display: none;
+    }
+    #ytEnableBtn.visible { display: inline-block; }
+    #ytEnableBtn:hover { background: #2a3340; }
+    #ytWatchLink {
+      display: none;
+      margin-left: 10px;
+      color: var(--accent);
+      font-size: 0.85rem;
+    }
+    #ytWatchLink.visible { display: inline; }
+    .music-section {
+      margin-top: 16px;
+      padding: 12px;
+      border-radius: 10px;
+      background: #141a21;
+      border: 1px solid #2a3340;
+    }
+    .music-section .label { margin-bottom: 8px; }
+    #musicMeta {
+      color: var(--muted);
+      font-size: 0.85rem;
+      min-height: 1.2em;
+    }
+    #musicAudio {
+      display: none;
+    }
+    #musicEnableBtn {
+      margin-top: 8px;
+      border: 1px solid #334155;
+      background: #222a35;
+      color: var(--text);
+      border-radius: 8px;
+      padding: 8px 12px;
+      cursor: pointer;
+      display: none;
+    }
+    #musicEnableBtn.visible { display: inline-block; }
+    #musicEnableBtn:hover { background: #2a3340; }
+    .mode-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .mode-row button {
+      flex: 1;
+      border: 1px solid #334155;
+      background: #222a35;
+      color: var(--text);
+      border-radius: 8px;
+      padding: 10px 12px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .mode-row button.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .mode-row button:hover { background: #2a3340; }
+    .mode-row button.active:hover { background: #2f7ae8; }
+    #voiceStateBadge {
+      margin: 0 0 14px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: #141a21;
+      border: 1px solid #2a3340;
+      color: var(--muted);
+      font-size: 0.9rem;
+      text-align: center;
+    }
+    #voiceStateBadge.listening { color: var(--danger); border-color: #5a3030; }
+    #voiceStateBadge.processing { color: #e0b44e; }
+    #voiceStateBadge.speaking { color: var(--ok); }
+    #voiceStateBadge.error { color: var(--danger); }
+    #wakePrivacy {
+      margin: -8px 0 16px;
+      color: var(--muted);
+      font-size: 0.75rem;
+      line-height: 1.35;
+    }
+    #micBtn.handsfree-idle {
+      background: #2a3340;
+      box-shadow: none;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Andru</h1>
+    <p class="subtitle">Local voice interface — same chat brain as the API</p>
+
+    <div class="mode-row" role="group" aria-label="Voice mode">
+      <button id="modeHandsfreeBtn" type="button" class="active">Hands-free</button>
+      <button id="modePttBtn" type="button">Push-to-talk</button>
+    </div>
+    <div id="voiceStateBadge">Say Hey Andru</div>
+    <p id="wakePrivacy"></p>
+
+    <div class="mic-wrap">
+      <button id="micBtn" type="button" aria-label="Hold to talk">Hold to talk</button>
+      <div class="hint" id="micHint">Hands-free: say “Hey Andru”. Or switch to push-to-talk.</div>
+    </div>
+
+    <div class="voice-row">
+      <label for="voiceSelect">Voice</label>
+      <select id="voiceSelect" aria-label="TTS voice"></select>
+      <button id="testVoiceBtn" type="button">Test Voice</button>
+    </div>
+
+    <div class="yt-section">
+      <span class="label">YouTube</span>
+      <div id="ytPlayerHost"></div>
+      <div id="ytMeta">Player idle — ask Andru to search or play a video.</div>
+      <div style="margin-top: 8px;">
+        <button id="ytEnableBtn" type="button">Enable YouTube audio</button>
+        <a id="ytWatchLink" href="#" target="_blank" rel="noopener noreferrer">Watch on YouTube</a>
+      </div>
+    </div>
+
+    <div class="music-section">
+      <span class="label">Audius music</span>
+      <audio id="musicAudio" preload="none"></audio>
+      <div id="musicMeta">Music idle — ask Andru to search or play a song.</div>
+      <button id="musicEnableBtn" type="button">Enable music audio</button>
+    </div>
+
+    <div class="block">
+      <span class="label">You said</span>
+      <div class="value" id="transcript">—</div>
+    </div>
+
+    <div class="block">
+      <span class="label">Andru</span>
+      <div class="value" id="reply">—</div>
+    </div>
+
+    <div id="status" role="status">Ready.</div>
+
+    <div class="actions">
+      <button id="stopSpeakBtn" type="button">Stop speaking</button>
+      <button id="resetBtn" type="button">Clear conversation</button>
+    </div>
+
+    <div class="fallback" id="fallback">
+      <input id="textInput" type="text" placeholder="Type a message…" autocomplete="off" />
+      <button id="sendBtn" type="button">Send</button>
+    </div>
+  </main>
+
+  <script src="/voice-core.js"></script>
+  <script src="https://www.youtube.com/iframe_api"></script>
+  <script>
+    (() => {
+      const Core = window.AndruVoiceCore;
+      if (!Core) {
+        console.error("AndruVoiceCore missing — /voice-core.js failed to load");
+      }
+
+      const micBtn = document.getElementById("micBtn");
+      const micHint = document.getElementById("micHint");
+      const transcriptEl = document.getElementById("transcript");
+      const replyEl = document.getElementById("reply");
+      const statusEl = document.getElementById("status");
+      const resetBtn = document.getElementById("resetBtn");
+      const stopSpeakBtn = document.getElementById("stopSpeakBtn");
+      const fallback = document.getElementById("fallback");
+      const textInput = document.getElementById("textInput");
+      const sendBtn = document.getElementById("sendBtn");
+      const voiceSelect = document.getElementById("voiceSelect");
+      const testVoiceBtn = document.getElementById("testVoiceBtn");
+      const ytMeta = document.getElementById("ytMeta");
+      const ytEnableBtn = document.getElementById("ytEnableBtn");
+      const ytWatchLink = document.getElementById("ytWatchLink");
+      const musicAudio = document.getElementById("musicAudio");
+      const musicMeta = document.getElementById("musicMeta");
+      const musicEnableBtn = document.getElementById("musicEnableBtn");
+      const modeHandsfreeBtn = document.getElementById("modeHandsfreeBtn");
+      const modePttBtn = document.getElementById("modePttBtn");
+      const voiceStateBadge = document.getElementById("voiceStateBadge");
+      const wakePrivacy = document.getElementById("wakePrivacy");
+
+      const VOICE_STORAGE_KEY = "andru_tts_voice";
+      const VOICE_MODE_KEY = "andru_voice_mode";
+      const YT_VIDEO_ID_RE = /^[a-zA-Z0-9_-]{11}$/;
+      const MUSIC_TRACK_ID_RE = /^[a-zA-Z0-9]{4,64}$/;
+      const MUSIC_STREAM_PATH_RE = /^\/music\/stream\/[a-zA-Z0-9]{4,64}$/;
+      const YT_ACTIONS = new Set([
+        "play", "pause", "resume", "stop", "next", "previous", "set_volume",
+      ]);
+      const MUSIC_ACTIONS = new Set([
+        "play", "pause", "resume", "stop", "next", "previous", "set_volume",
+      ]);
+      const MALE_NAME_HINTS = [
+        "male", "guy", "man", "david", "daniel", "george", "alex",
+        "mark", "james", "ryan", "thomas", "brian", "christopher",
+        "eric", "sam", "richard", "roger", "matthew", "andrew",
+      ];
+
+      const SpeechRecognition =
+        window.SpeechRecognition || window.webkitSpeechRecognition;
+
+      let recognition = null;
+      let listening = false;
+      let finalTranscript = "";
+      let pendingSend = false;
+      let busy = false;
+      let selectedVoice = null;
+
+      let voiceMachine = Core
+        ? Core.createVoiceMachineState("handsfree")
+        : { state: "IDLE", mode: "handsfree", pendingCommand: null, lastError: null };
+      let wakeDetector = null;
+      let commandRecognition = null;
+      let handsfreeSupported = Boolean(SpeechRecognition && Core);
+
+      let ytPlayer = null;
+      let ytReady = false;
+      let ytUnlocked = false;
+      let ytPendingAction = null;
+      let ytQueuedVideoId = null;
+      let ytTitle = "";
+      let ytVolume = 80;
+      let ytInitStarted = false;
+      let ytAwaitingEnableAfterReady = false;
+      const PLAY_CONFIRM_MS = 2500;
+
+      let musicUnlocked = false;
+      let musicPendingPlay = null;
+      let musicTrackId = null;
+      let musicTitle = "";
+      let musicArtist = "";
+      let musicVolume = 80;
+
+      function setStatus(text, kind = "") {
+        statusEl.textContent = text;
+        statusEl.className = kind;
+      }
+
+      function dispatchVoice(event) {
+        if (!Core) return;
+        voiceMachine = Core.reduceVoiceState(voiceMachine, event);
+        syncVoiceUi();
+        syncWakeDetector();
+      }
+
+      function syncVoiceUi() {
+        const label = Core
+          ? Core.statusLabelForState(voiceMachine.state, voiceMachine.mode)
+          : "Ready.";
+        voiceStateBadge.textContent = label;
+        voiceStateBadge.className = "";
+        if (voiceMachine.state === "LISTENING") voiceStateBadge.classList.add("listening");
+        if (voiceMachine.state === "PROCESSING") voiceStateBadge.classList.add("processing");
+        if (voiceMachine.state === "SPEAKING") voiceStateBadge.classList.add("speaking");
+        if (voiceMachine.state === "ERROR") voiceStateBadge.classList.add("error");
+
+        const handsfree = voiceMachine.mode === "handsfree";
+        modeHandsfreeBtn.classList.toggle("active", handsfree);
+        modePttBtn.classList.toggle("active", !handsfree);
+        micBtn.classList.toggle("handsfree-idle", handsfree && voiceMachine.state === "IDLE");
+
+        if (handsfree) {
+          micHint.textContent =
+            "Hands-free: say “Hey Andru” or “Hey Andru, …” — push-to-talk still works if you hold the button.";
+          micBtn.textContent =
+            voiceMachine.state === "LISTENING" ? "Listening…" : "Say Hey Andru";
+        } else {
+          micHint.textContent = "Press and hold the microphone, then release to send.";
+          micBtn.textContent = listening ? "Listening…" : "Hold to talk";
+        }
+      }
+
+      function syncWakeDetector() {
+        if (!wakeDetector) return;
+        const should =
+          Core && Core.shouldRunWakeDetector(voiceMachine) && handsfreeSupported;
+        if (should) {
+          try {
+            wakeDetector.start();
+          } catch (_) {}
+        } else {
+          try {
+            wakeDetector.stop();
+          } catch (_) {}
+        }
+      }
+
+      function setMode(mode) {
+        if (mode === "handsfree" && !handsfreeSupported) {
+          setStatus(
+            "Hands-free unavailable in this browser — using push-to-talk.",
+            "error",
+          );
+          mode = "pushtotalk";
+        }
+        localStorage.setItem(VOICE_MODE_KEY, mode);
+        stopCommandListening();
+        if (Core) {
+          voiceMachine = Core.reduceVoiceState(voiceMachine, {
+            type: "MODE_CHANGED",
+            mode: mode,
+          });
+        } else {
+          voiceMachine.mode = mode;
+          voiceMachine.state = "IDLE";
+        }
+        syncVoiceUi();
+        syncWakeDetector();
+        setStatus(
+          mode === "handsfree"
+            ? "Hands-free on — say Hey Andru."
+            : "Push-to-talk mode.",
+          "ok",
+        );
+      }
+
+      function stopCommandListening() {
+        if (!commandRecognition) return;
+        try {
+          commandRecognition.onend = null;
+          commandRecognition.stop();
+        } catch (_) {}
+        commandRecognition = null;
+      }
+
+      function startCommandListening() {
+        if (!SpeechRecognition) {
+          dispatchVoice({ type: "ERROR", message: "Speech recognition unavailable" });
+          return;
+        }
+        stopCommandListening();
+        const rec = new SpeechRecognition();
+        commandRecognition = rec;
+        rec.lang = "en-US";
+        rec.interimResults = true;
+        rec.continuous = false;
+        rec.maxAlternatives = 1;
+        let finalText = "";
+        rec.onresult = (event) => {
+          let interim = "";
+          for (let i = event.resultIndex; i < event.results.length; i += 1) {
+            const piece = event.results[i][0].transcript;
+            if (event.results[i].isFinal) finalText += piece;
+            else interim += piece;
+          }
+          transcriptEl.textContent = (finalText || interim || "…").trim();
+        };
+        rec.onerror = (event) => {
+          const err = event.error || "unknown";
+          if (err === "no-speech") {
+            dispatchVoice({ type: "RECOVER" });
+            setStatus("No speech detected. Say Hey Andru again.", "error");
+            return;
+          }
+          dispatchVoice({ type: "ERROR", message: err });
+          setStatus("Speech recognition error: " + err, "error");
+        };
+        rec.onend = () => {
+          commandRecognition = null;
+          const text = (finalText || transcriptEl.textContent || "").trim();
+          if (!text || text === "…") {
+            dispatchVoice({ type: "RECOVER" });
+            setStatus("No command heard. Say Hey Andru again.", "error");
+            return;
+          }
+          dispatchVoice({ type: "COMMAND_CAPTURED", text: text });
+          void sendToAndru(text, { fromHandsfree: true });
+        };
+        try {
+          rec.start();
+          setStatus("Listening for your command…", "ok");
+        } catch (err) {
+          dispatchVoice({
+            type: "ERROR",
+            message: err && err.message ? err.message : String(err),
+          });
+        }
+      }
+
+      function onWakeEvent(event) {
+        if (!Core || !Core.shouldRunWakeDetector(voiceMachine)) return;
+        transcriptEl.textContent = event.rawTranscript || event.phrase;
+        dispatchVoice({ type: "WAKE", command: event.command || "" });
+        if (event.command && event.command.trim()) {
+          void sendToAndru(event.command.trim(), { fromHandsfree: true });
+        } else {
+          startCommandListening();
+        }
+      }
+
+      function initWakeDetector() {
+        if (!Core || !SpeechRecognition) {
+          handsfreeSupported = false;
+          wakePrivacy.textContent =
+            "Hands-free wake word requires Web Speech API. Using push-to-talk.";
+          return;
+        }
+        wakeDetector = Core.createTranscriptWakeDetector({
+          createRecognition: function () {
+            return new SpeechRecognition();
+          },
+          isArmed: function () {
+            return Core.shouldRunWakeDetector(voiceMachine);
+          },
+        });
+        wakeDetector.onWake(onWakeEvent);
+        wakePrivacy.textContent = wakeDetector.privacyNote;
+      }
+
+      function setYtMeta(text) {
+        ytMeta.textContent = text;
+      }
+
+      function setMusicMeta(text) {
+        musicMeta.textContent = text;
+      }
+
+      function showEnableAudio(show) {
+        ytEnableBtn.classList.toggle("visible", Boolean(show));
+      }
+
+      function showMusicEnable(show) {
+        musicEnableBtn.classList.toggle("visible", Boolean(show));
+      }
+
+      function musicLabel(title, artist) {
+        const t = (title || "").trim();
+        const a = (artist || "").trim();
+        if (t && a) return t + " — " + a;
+        return t || a || "";
+      }
+
+      function showWatchFallback(videoId) {
+        if (videoId && YT_VIDEO_ID_RE.test(videoId)) {
+          ytWatchLink.href = "https://www.youtube.com/watch?v=" + videoId;
+          ytWatchLink.classList.add("visible");
+        } else {
+          ytWatchLink.href = "#";
+          ytWatchLink.classList.remove("visible");
+        }
+      }
+
+      function queueVideo(videoId, title) {
+        if (videoId && YT_VIDEO_ID_RE.test(videoId)) {
+          ytQueuedVideoId = videoId;
+        }
+        if (title) ytTitle = title;
+      }
+
+      function planEnableAudioUnlock(playerReady, queuedVideoId, pendingPlayVideoId) {
+        const videoId =
+          (queuedVideoId && String(queuedVideoId).trim()) ||
+          (pendingPlayVideoId && String(pendingPlayVideoId).trim()) ||
+          "";
+        if (!videoId || !YT_VIDEO_ID_RE.test(videoId)) {
+          return { action: "no_video" };
+        }
+        if (!playerReady) {
+          return { action: "wait_for_ready", videoId: videoId };
+        }
+        return { action: "play_now", videoId: videoId };
+      }
+
+      function playbackUiLabel(status, title) {
+        const t = (title || "").trim();
+        if (status === "player_not_ready" || status === "queued") {
+          return t ? ("Loading: " + t) : "Loading YouTube…";
+        }
+        if (status === "autoplay_blocked") {
+          return t
+            ? ("Audio blocked — enable audio (" + t + ")")
+            : "Audio blocked — enable audio";
+        }
+        if (status === "playing") return t ? ("Playing: " + t) : "Playing";
+        if (status === "paused") return t ? ("Paused: " + t) : "Paused";
+        if (status === "stopped") return t ? ("Stopped: " + t) : "Stopped";
+        if (status === "player_error") {
+          return t ? ("YouTube error (" + t + ")") : "YouTube player error";
+        }
+        return "Ready";
+      }
+
+      function musicUiLabel(status, title, artist) {
+        const label = musicLabel(title, artist);
+        if (status === "queued") {
+          return label ? ("Loading music: " + label) : "Loading music…";
+        }
+        if (status === "autoplay_blocked") {
+          return label
+            ? ("Music blocked — enable audio (" + label + ")")
+            : "Music blocked — enable audio";
+        }
+        if (status === "playing") return label ? ("Playing: " + label) : "Playing music";
+        if (status === "paused") return label ? ("Paused: " + label) : "Paused";
+        if (status === "stopped") return label ? ("Stopped: " + label) : "Stopped";
+        if (status === "player_error") {
+          return label ? ("Music error (" + label + ")") : "Music player error";
+        }
+        return "Music idle — ask Andru to search or play a song.";
+      }
+
+      function truthfulPlaybackReply(status, title, kind) {
+        const t = (title || "").trim();
+        const isMusic = kind === "music";
+        const where = isMusic ? "Audius" : "YouTube";
+        if (status === "playing") {
+          return t ? ("Playing " + t + " on " + where + ".") : ("Playing on " + where + ".");
+        }
+        if (status === "autoplay_blocked") {
+          const enable = isMusic ? "Enable music audio" : "Enable YouTube audio";
+          return t
+            ? ("I queued " + t + ", but the browser blocked autoplay. Tap " + enable + " on the voice page, then I can play it.")
+            : ("I queued the track, but the browser blocked autoplay. Tap " + enable + " on the voice page.");
+        }
+        if (status === "player_not_ready") {
+          return t
+            ? ("I queued " + t + ", but the player is still loading. Try again in a moment.")
+            : "I queued the track, but the player is still loading. Try again in a moment.";
+        }
+        if (status === "player_error") {
+          return t
+            ? ("I couldn't play " + t + " — the " + where + " player reported an error.")
+            : ("I couldn't play that — the " + where + " player reported an error.");
+        }
+        if (status === "paused") return t ? ("Paused " + t + ".") : ("Paused " + where + ".");
+        if (status === "stopped") return t ? ("Stopped " + t + ".") : ("Stopped " + where + ".");
+        return t
+          ? ("Queued " + t + " for the " + where + " player. It is not confirmed playing yet.")
+          : ("Queued for the " + where + " player. It is not confirmed playing yet.");
+      }
+
+      function reconcileAssistantReply(llmReply, outcomes) {
+        const playOutcomes = (outcomes || []).filter((o) => o.action === "play");
+        if (!playOutcomes.length) return llmReply;
+        const worst =
+          playOutcomes.find((o) => o.status === "player_error") ||
+          playOutcomes.find((o) => o.status === "autoplay_blocked") ||
+          playOutcomes.find((o) => o.status === "player_not_ready") ||
+          playOutcomes.find((o) => o.status === "queued") ||
+          playOutcomes[playOutcomes.length - 1];
+        const kind = worst.type === "music" ? "music" : "youtube";
+        if (worst.status === "playing") {
+          return truthfulPlaybackReply("playing", worst.title, kind);
+        }
+        return truthfulPlaybackReply(worst.status, worst.title, kind);
+      }
+
+      function setListening(on) {
+        listening = on;
+        micBtn.classList.toggle("listening", on);
+        micBtn.textContent = on ? "Listening…" : "Hold to talk";
+      }
+
+      function isEnglishVoice(voice) {
+        const lang = (voice.lang || "").toLowerCase();
+        return lang.startsWith("en");
+      }
+
+      function looksMale(voice) {
+        const name = (voice.name || "").toLowerCase();
+        return MALE_NAME_HINTS.some((hint) => name.includes(hint));
+      }
+
+      function formatVoiceLabel(voice) {
+        return `${voice.name} - ${voice.lang}`;
+      }
+
+      function preferMaleEnglishVoice(voices) {
+        if (!voices.length) return null;
+        const english = voices.filter(isEnglishVoice);
+        const maleEnglish = english.find(looksMale);
+        if (maleEnglish) return maleEnglish;
+        const defaultEnglish = english.find((v) => v.default);
+        if (defaultEnglish) return defaultEnglish;
+        if (english.length) return english[0];
+        const anyDefault = voices.find((v) => v.default);
+        return anyDefault || voices[0];
+      }
+
+      function getSelectedVoiceFromUi(voices) {
+        const name = voiceSelect.value;
+        return voices.find((v) => v.name === name) || null;
+      }
+
+      function populateVoiceSelect(voices, preferred) {
+        const previous = voiceSelect.value;
+        const preferredName = preferred ? preferred.name : null;
+        voiceSelect.innerHTML = "";
+        for (const voice of voices) {
+          const option = document.createElement("option");
+          option.value = voice.name;
+          let label = formatVoiceLabel(voice);
+          if (preferredName && voice.name === preferredName) {
+            label += " (default)";
+          }
+          option.textContent = label;
+          voiceSelect.appendChild(option);
+        }
+
+        const savedName = localStorage.getItem(VOICE_STORAGE_KEY);
+        const saved = savedName
+          ? voices.find((v) => v.name === savedName)
+          : null;
+        const chosen =
+          saved ||
+          voices.find((v) => v.name === previous) ||
+          preferred ||
+          preferMaleEnglishVoice(voices);
+
+        if (chosen) {
+          voiceSelect.value = chosen.name;
+          selectedVoice = chosen;
+        }
+      }
+
+      function refreshVoices() {
+        if (!window.speechSynthesis) {
+          voiceSelect.disabled = true;
+          testVoiceBtn.disabled = true;
+          return;
+        }
+        const voices = window.speechSynthesis.getVoices();
+        if (!voices.length) return;
+        const preferred = preferMaleEnglishVoice(voices);
+        populateVoiceSelect(voices, preferred);
+      }
+
+      function isValidYoutubeAction(action) {
+        if (!action || typeof action !== "object") return false;
+        if (action.type !== "youtube") return false;
+        if (!YT_ACTIONS.has(action.action)) return false;
+        if (action.action === "play") {
+          return typeof action.videoId === "string" && YT_VIDEO_ID_RE.test(action.videoId);
+        }
+        if (action.action === "set_volume") {
+          return Number.isInteger(action.volume) && action.volume >= 0 && action.volume <= 100;
+        }
+        return true;
+      }
+
+      function isValidMusicAction(action) {
+        if (!action || typeof action !== "object") return false;
+        if (action.type !== "music") return false;
+        if (!MUSIC_ACTIONS.has(action.action)) return false;
+        if (action.action === "play") {
+          return (
+            typeof action.trackId === "string" &&
+            MUSIC_TRACK_ID_RE.test(action.trackId) &&
+            typeof action.streamPath === "string" &&
+            MUSIC_STREAM_PATH_RE.test(action.streamPath) &&
+            action.streamPath === "/music/stream/" + action.trackId
+          );
+        }
+        if (action.action === "set_volume") {
+          return Number.isInteger(action.volume) && action.volume >= 0 && action.volume <= 100;
+        }
+        return true;
+      }
+
+      function waitForMusicPlayConfirmation() {
+        return new Promise((resolve) => {
+          let settled = false;
+          const finish = (status) => {
+            if (settled) return;
+            settled = true;
+            musicAudio.removeEventListener("playing", onPlaying);
+            musicAudio.removeEventListener("error", onError);
+            resolve(status);
+          };
+          const onPlaying = () => finish("playing");
+          const onError = () => finish("player_error");
+          musicAudio.addEventListener("playing", onPlaying);
+          musicAudio.addEventListener("error", onError);
+          const started = Date.now();
+          const poll = () => {
+            if (settled) return;
+            if (!musicAudio.paused && !musicAudio.ended && musicAudio.currentTime > 0) {
+              finish("playing");
+              return;
+            }
+            if (Date.now() - started >= PLAY_CONFIRM_MS) {
+              finish(musicAudio.error ? "player_error" : "autoplay_blocked");
+              return;
+            }
+            setTimeout(poll, 200);
+          };
+          setTimeout(poll, 200);
+        });
+      }
+
+      async function startMusicFromPath(streamPath, trackId, title, artist) {
+        musicTrackId = trackId;
+        musicTitle = title || musicTitle || trackId;
+        musicArtist = artist || musicArtist || "";
+        musicPendingPlay = {
+          type: "music",
+          action: "play",
+          trackId,
+          streamPath,
+          title: musicTitle,
+          artist: musicArtist,
+        };
+        setMusicMeta(musicUiLabel("queued", musicTitle, musicArtist));
+        try {
+          musicAudio.volume = Math.max(0, Math.min(1, musicVolume / 100));
+          musicAudio.src = streamPath;
+          musicAudio.load();
+          const playPromise = musicAudio.play();
+          if (playPromise && typeof playPromise.then === "function") {
+            await playPromise.catch(() => {});
+          }
+        } catch (_) {}
+        const status = await waitForMusicPlayConfirmation();
+        if (status === "playing") {
+          musicUnlocked = true;
+          musicPendingPlay = null;
+          showMusicEnable(false);
+          setMusicMeta(musicUiLabel("playing", musicTitle, musicArtist));
+          setStatus("Music playing.", "ok");
+          return {
+            type: "music",
+            action: "play",
+            status: "playing",
+            title: musicLabel(musicTitle, musicArtist),
+            trackId,
+          };
+        }
+        if (status === "player_error") {
+          showMusicEnable(Boolean(musicPendingPlay));
+          setMusicMeta(musicUiLabel("player_error", musicTitle, musicArtist));
+          setStatus("Music playback error.", "error");
+          return {
+            type: "music",
+            action: "play",
+            status: "player_error",
+            title: musicLabel(musicTitle, musicArtist),
+            trackId,
+          };
+        }
+        showMusicEnable(true);
+        setMusicMeta(musicUiLabel("autoplay_blocked", musicTitle, musicArtist));
+        setStatus("Music blocked — tap Enable music audio.", "error");
+        return {
+          type: "music",
+          action: "play",
+          status: "autoplay_blocked",
+          title: musicLabel(musicTitle, musicArtist),
+          trackId,
+        };
+      }
+
+      function playQueuedMusicFromUserGesture() {
+        if (!musicPendingPlay || musicPendingPlay.action !== "play") {
+          return { ok: false, reason: "no_track" };
+        }
+        const { streamPath, trackId, title, artist } = musicPendingPlay;
+        if (
+          !MUSIC_TRACK_ID_RE.test(trackId) ||
+          !MUSIC_STREAM_PATH_RE.test(streamPath) ||
+          streamPath !== "/music/stream/" + trackId
+        ) {
+          return { ok: false, reason: "invalid" };
+        }
+        musicUnlocked = true;
+        musicTitle = title || musicTitle;
+        musicArtist = artist || musicArtist;
+        musicTrackId = trackId;
+        try {
+          musicAudio.volume = Math.max(0, Math.min(1, musicVolume / 100));
+          musicAudio.src = streamPath;
+          musicAudio.load();
+          const p = musicAudio.play();
+          return { ok: true, playPromise: p, trackId, title: musicTitle, artist: musicArtist };
+        } catch (err) {
+          return { ok: false, reason: "error", error: err };
+        }
+      }
+
+      async function confirmMusicUnlockPlayback() {
+        const status = await waitForMusicPlayConfirmation();
+        const label = musicLabel(musicTitle, musicArtist);
+        if (status === "playing") {
+          musicPendingPlay = null;
+          showMusicEnable(false);
+          setMusicMeta(musicUiLabel("playing", musicTitle, musicArtist));
+          setStatus("Music playing.", "ok");
+          const line = truthfulPlaybackReply("playing", label, "music");
+          replyEl.textContent = line;
+          speak(line);
+          return;
+        }
+        showMusicEnable(true);
+        setMusicMeta(musicUiLabel("autoplay_blocked", musicTitle, musicArtist));
+        setStatus("Still blocked — tap Enable music audio again.", "error");
+        const failLine =
+          "Chrome still blocked music playback" +
+          (label ? " of " + label : "") +
+          ". Tap Enable music audio again.";
+        replyEl.textContent = failLine;
+        speak(failLine);
+      }
+
+      async function applyMusicAction(action) {
+        if (!isValidMusicAction(action)) {
+          setStatus("Ignored invalid music command.", "error");
+          return { type: "music", action: action && action.action, status: "player_error" };
+        }
+
+        if (action.action === "play") {
+          return startMusicFromPath(
+            action.streamPath,
+            action.trackId,
+            action.title,
+            action.artist,
+          );
+        }
+
+        try {
+          if (action.action === "pause") {
+            musicAudio.pause();
+            setMusicMeta(musicUiLabel("paused", musicTitle, musicArtist));
+            return {
+              type: "music",
+              action: "pause",
+              status: "paused",
+              title: musicLabel(musicTitle, musicArtist),
+            };
+          }
+          if (action.action === "resume") {
+            if (!musicUnlocked || !musicAudio.src) {
+              showMusicEnable(Boolean(musicPendingPlay));
+              setMusicMeta(musicUiLabel("autoplay_blocked", musicTitle, musicArtist));
+              return {
+                type: "music",
+                action: "resume",
+                status: "autoplay_blocked",
+                title: musicLabel(musicTitle, musicArtist),
+              };
+            }
+            try {
+              await musicAudio.play();
+            } catch (_) {}
+            const status = await waitForMusicPlayConfirmation();
+            if (status === "playing") {
+              showMusicEnable(false);
+              setMusicMeta(musicUiLabel("playing", musicTitle, musicArtist));
+              return {
+                type: "music",
+                action: "resume",
+                status: "playing",
+                title: musicLabel(musicTitle, musicArtist),
+              };
+            }
+            showMusicEnable(true);
+            setMusicMeta(musicUiLabel("autoplay_blocked", musicTitle, musicArtist));
+            return {
+              type: "music",
+              action: "resume",
+              status: "autoplay_blocked",
+              title: musicLabel(musicTitle, musicArtist),
+            };
+          }
+          if (action.action === "stop") {
+            musicAudio.pause();
+            musicAudio.removeAttribute("src");
+            musicAudio.load();
+            setMusicMeta(musicUiLabel("stopped", musicTitle, musicArtist));
+            return {
+              type: "music",
+              action: "stop",
+              status: "stopped",
+              title: musicLabel(musicTitle, musicArtist),
+            };
+          }
+          if (action.action === "set_volume") {
+            musicVolume = action.volume;
+            musicAudio.volume = Math.max(0, Math.min(1, action.volume / 100));
+            const label = musicLabel(musicTitle, musicArtist);
+            setMusicMeta((label ? label + " — " : "") + "Volume " + action.volume + "%");
+            return {
+              type: "music",
+              action: "set_volume",
+              status: "accepted",
+              title: label,
+            };
+          }
+          if (action.action === "next" || action.action === "previous") {
+            // Server expands next/previous into play actions; bare next/previous are no-ops here.
+            setStatus("Music next/previous is handled server-side as a play queue.", "error");
+            return {
+              type: "music",
+              action: action.action,
+              status: "player_error",
+              title: musicLabel(musicTitle, musicArtist),
+            };
+          }
+        } catch (err) {
+          setMusicMeta(musicUiLabel("player_error", musicTitle, musicArtist));
+          setStatus("Music player error: " + (err.message || String(err)), "error");
+          return {
+            type: "music",
+            action: action.action,
+            status: "player_error",
+            title: musicLabel(musicTitle, musicArtist),
+          };
+        }
+        return {
+          type: "music",
+          action: action.action,
+          status: "accepted",
+          title: musicLabel(musicTitle, musicArtist),
+        };
+      }
+
+      function waitForPlayConfirmation() {
+        return new Promise((resolve) => {
+          let settled = false;
+          const finish = (status) => {
+            if (settled) return;
+            settled = true;
+            resolve(status);
+          };
+
+          const onState = (event) => {
+            if (event.data === YT.PlayerState.PLAYING) {
+              finish("playing");
+            }
+          };
+
+          try {
+            ytPlayer.addEventListener("onStateChange", onState);
+          } catch (_) {}
+
+          const started = Date.now();
+          const poll = () => {
+            if (settled) return;
+            let state = null;
+            try {
+              state = ytPlayer.getPlayerState();
+            } catch (_) {}
+            if (state === YT.PlayerState.PLAYING) {
+              finish("playing");
+              return;
+            }
+            const elapsed = Date.now() - started;
+            if (elapsed >= PLAY_CONFIRM_MS) {
+              if (state === YT.PlayerState.BUFFERING && elapsed < PLAY_CONFIRM_MS + 2000) {
+                setTimeout(poll, 400);
+                return;
+              }
+              finish("autoplay_blocked");
+              return;
+            }
+            setTimeout(poll, 200);
+          };
+          setTimeout(poll, 200);
+        });
+      }
+
+      /** Sync unlock — must run inside the Enable click gesture. */
+      function playQueuedVideoFromUserGesture(videoId) {
+        ytUnlocked = true;
+        queueVideo(videoId, ytTitle);
+        try {
+          if (typeof ytPlayer.unMute === "function") ytPlayer.unMute();
+          if (typeof ytPlayer.setVolume === "function") ytPlayer.setVolume(ytVolume);
+          ytPlayer.loadVideoById(videoId);
+          ytPlayer.playVideo();
+          return { ok: true };
+        } catch (err) {
+          return { ok: false, error: err };
+        }
+      }
+
+      async function confirmUnlockPlayback(videoId) {
+        const status = await waitForPlayConfirmation();
+        if (status === "playing") {
+          showEnableAudio(false);
+          showWatchFallback(null);
+          setYtMeta(playbackUiLabel("playing", ytTitle));
+          setStatus("YouTube playing.", "ok");
+          const line = truthfulPlaybackReply("playing", ytTitle, "youtube");
+          replyEl.textContent = line;
+          speak(line);
+          return;
+        }
+        showEnableAudio(true);
+        showWatchFallback(videoId);
+        setYtMeta(playbackUiLabel("autoplay_blocked", ytTitle));
+        setStatus("Still blocked — tap Enable YouTube audio again, or Watch on YouTube.", "error");
+        const failLine =
+          "Chrome still blocked playback" +
+          (ytTitle ? " of " + ytTitle : "") +
+          ". Tap Enable YouTube audio again, or use Watch on YouTube.";
+        replyEl.textContent = failLine;
+        speak(failLine);
+      }
+
+      async function applyYoutubeAction(action) {
+        if (!isValidYoutubeAction(action)) {
+          setStatus("Ignored invalid YouTube command.", "error");
+          return { type: "youtube", action: action && action.action, status: "player_error" };
+        }
+
+        if (action.action === "play" && action.videoId) {
+          queueVideo(action.videoId, action.title || action.videoId);
+          ytPendingAction = {
+            type: "youtube",
+            action: "play",
+            videoId: action.videoId,
+            title: action.title,
+          };
+        }
+
+        if (!ytReady || !ytPlayer) {
+          setYtMeta(playbackUiLabel("player_not_ready", action.title || ytTitle));
+          setStatus("YouTube player still loading…", "error");
+          showEnableAudio(Boolean(ytQueuedVideoId));
+          showWatchFallback(ytQueuedVideoId);
+          return {
+            type: "youtube",
+            action: action.action,
+            status: "player_not_ready",
+            title: action.title || ytTitle,
+            videoId: action.videoId || ytQueuedVideoId,
+          };
+        }
+
+        try {
+          if (action.action === "play") {
+            ytTitle = action.title || ytTitle || action.videoId;
+            queueVideo(action.videoId, ytTitle);
+            setYtMeta(playbackUiLabel("queued", ytTitle));
+            try {
+              if (typeof ytPlayer.unMute === "function") ytPlayer.unMute();
+              if (typeof ytPlayer.setVolume === "function") ytPlayer.setVolume(ytVolume);
+            } catch (_) {}
+            ytPlayer.loadVideoById(action.videoId);
+            try {
+              ytPlayer.playVideo();
+            } catch (_) {}
+            const status = await waitForPlayConfirmation();
+            if (status === "playing") {
+              ytUnlocked = true;
+              ytPendingAction = null;
+              showEnableAudio(false);
+              showWatchFallback(null);
+              setYtMeta(playbackUiLabel("playing", ytTitle));
+              setStatus("YouTube playing.", "ok");
+              return { type: "youtube", action: "play", status: "playing", title: ytTitle, videoId: action.videoId };
+            }
+            showEnableAudio(true);
+            showWatchFallback(action.videoId);
+            setYtMeta(playbackUiLabel("autoplay_blocked", ytTitle));
+            setStatus("Audio blocked — tap Enable YouTube audio.", "error");
+            return {
+              type: "youtube",
+              action: "play",
+              status: "autoplay_blocked",
+              title: ytTitle,
+              videoId: action.videoId,
+            };
+          }
+
+          if (action.action === "pause") {
+            ytPlayer.pauseVideo();
+            setYtMeta(playbackUiLabel("paused", ytTitle));
+            return { type: "youtube", action: "pause", status: "paused", title: ytTitle };
+          }
+          if (action.action === "resume") {
+            if (!ytUnlocked) {
+              showEnableAudio(true);
+              showWatchFallback(ytQueuedVideoId);
+              setYtMeta(playbackUiLabel("autoplay_blocked", ytTitle));
+              return { type: "youtube", action: "resume", status: "autoplay_blocked", title: ytTitle };
+            }
+            ytPlayer.playVideo();
+            const status = await waitForPlayConfirmation();
+            if (status === "playing") {
+              showEnableAudio(false);
+              setYtMeta(playbackUiLabel("playing", ytTitle));
+              return { type: "youtube", action: "resume", status: "playing", title: ytTitle };
+            }
+            showEnableAudio(true);
+            showWatchFallback(ytQueuedVideoId);
+            setYtMeta(playbackUiLabel("autoplay_blocked", ytTitle));
+            return { type: "youtube", action: "resume", status: "autoplay_blocked", title: ytTitle };
+          }
+          if (action.action === "stop") {
+            ytPlayer.stopVideo();
+            setYtMeta(playbackUiLabel("stopped", ytTitle));
+            return { type: "youtube", action: "stop", status: "stopped", title: ytTitle };
+          }
+          if (action.action === "set_volume") {
+            ytVolume = action.volume;
+            ytPlayer.setVolume(action.volume);
+            setYtMeta((ytTitle ? ytTitle + " — " : "") + "Volume " + action.volume + "%");
+            return { type: "youtube", action: "set_volume", status: "accepted", title: ytTitle };
+          }
+          if (action.action === "next" || action.action === "previous") {
+            setStatus(
+              "Next/previous is not available in the current player context.",
+              "error",
+            );
+            return { type: "youtube", action: action.action, status: "player_error", title: ytTitle };
+          }
+        } catch (err) {
+          setYtMeta(playbackUiLabel("player_error", ytTitle));
+          setStatus("YouTube player error: " + (err.message || String(err)), "error");
+          showWatchFallback(ytQueuedVideoId);
+          return { type: "youtube", action: action.action, status: "player_error", title: ytTitle };
+        }
+        return { type: "youtube", action: action.action, status: "accepted", title: ytTitle };
+      }
+
+      async function applyClientActions(actions) {
+        const outcomes = [];
+        if (!Array.isArray(actions)) return outcomes;
+        for (const action of actions) {
+          if (action && action.type === "youtube") {
+            outcomes.push(await applyYoutubeAction(action));
+          } else if (action && action.type === "music") {
+            outcomes.push(await applyMusicAction(action));
+          }
+        }
+        return outcomes;
+      }
+
+      function createYtPlayer() {
+        if (ytInitStarted || !window.YT || !YT.Player) return;
+        ytInitStarted = true;
+        setYtMeta("Loading YouTube…");
+        ytPlayer = new YT.Player("ytPlayerHost", {
+          width: "100%",
+          height: "100%",
+          playerVars: {
+            playsinline: 1,
+            modestbranding: 1,
+            rel: 0,
+          },
+          events: {
+            onReady: () => {
+              ytReady = true;
+              setYtMeta("Ready");
+              if (ytAwaitingEnableAfterReady && ytQueuedVideoId) {
+                ytAwaitingEnableAfterReady = false;
+                showEnableAudio(true);
+                showWatchFallback(ytQueuedVideoId);
+                setStatus("Player ready — tap Enable YouTube audio.", "ok");
+                return;
+              }
+              if (ytPendingAction && ytPendingAction.action === "play") {
+                showEnableAudio(true);
+                showWatchFallback(ytPendingAction.videoId || ytQueuedVideoId);
+                setYtMeta(
+                  playbackUiLabel("autoplay_blocked", ytPendingAction.title || ytTitle),
+                );
+              }
+            },
+            onError: () => {
+              setYtMeta(playbackUiLabel("player_error", ytTitle));
+              setStatus("YouTube playback error.", "error");
+              showWatchFallback(ytQueuedVideoId);
+              showEnableAudio(Boolean(ytQueuedVideoId));
+            },
+          },
+        });
+      }
+
+      window.onYouTubeIframeAPIReady = createYtPlayer;
+      if (window.YT && YT.Player) {
+        createYtPlayer();
+      } else {
+        setYtMeta("Loading YouTube…");
+      }
+
+      ytEnableBtn.addEventListener("click", (event) => {
+        event.preventDefault();
+        const pendingId =
+          ytPendingAction && ytPendingAction.action === "play"
+            ? ytPendingAction.videoId
+            : null;
+        const plan = planEnableAudioUnlock(ytReady, ytQueuedVideoId, pendingId);
+
+        if (plan.action === "no_video") {
+          showEnableAudio(false);
+          showWatchFallback(null);
+          const line =
+            "There is no queued YouTube video to unlock. Ask me to play something first.";
+          setStatus(line, "error");
+          replyEl.textContent = line;
+          speak(line);
+          return;
+        }
+
+        if (plan.action === "wait_for_ready") {
+          ytAwaitingEnableAfterReady = true;
+          queueVideo(plan.videoId, ytTitle);
+          showEnableAudio(true);
+          showWatchFallback(plan.videoId);
+          setYtMeta("Loading YouTube…");
+          const line =
+            "The YouTube player is still loading. When it says Ready, tap Enable YouTube audio again.";
+          setStatus(line, "error");
+          replyEl.textContent = line;
+          speak(line);
+          return;
+        }
+
+        const started = playQueuedVideoFromUserGesture(plan.videoId);
+        if (!started.ok) {
+          showEnableAudio(true);
+          showWatchFallback(plan.videoId);
+          const line =
+            "Could not start YouTube playback. Try Watch on YouTube, or ask me to play again.";
+          setYtMeta(playbackUiLabel("player_error", ytTitle));
+          setStatus(line, "error");
+          replyEl.textContent = line;
+          speak(line);
+          return;
+        }
+
+        ytPendingAction = null;
+        setYtMeta(playbackUiLabel("queued", ytTitle));
+        setStatus("Starting YouTube…", "ok");
+        void confirmUnlockPlayback(plan.videoId);
+      });
+
+      musicEnableBtn.addEventListener("click", (event) => {
+        event.preventDefault();
+        const started = playQueuedMusicFromUserGesture();
+        if (!started.ok) {
+          showMusicEnable(false);
+          const line =
+            started.reason === "no_track"
+              ? "There is no queued music track to unlock. Ask me to play a song first."
+              : "Could not start music playback. Ask me to play again.";
+          setStatus(line, "error");
+          replyEl.textContent = line;
+          speak(line);
+          return;
+        }
+        setMusicMeta(musicUiLabel("queued", musicTitle, musicArtist));
+        setStatus("Starting music…", "ok");
+        void confirmMusicUnlockPlayback();
+      });
+
+      function speak(text, options = {}) {
+        const fromHandsfree = Boolean(options.fromHandsfree);
+        if (!window.speechSynthesis || !text) {
+          if (fromHandsfree) dispatchVoice({ type: "SPEAK_ENDED" });
+          return;
+        }
+        // Pause wake detection while speaking (avoid self-trigger)
+        if (fromHandsfree) {
+          dispatchVoice({ type: "SPEAK_STARTED" });
+        }
+        try {
+          wakeDetector && wakeDetector.stop();
+        } catch (_) {}
+
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 1;
+
+        const voices = window.speechSynthesis.getVoices();
+        const voice = getSelectedVoiceFromUi(voices) || selectedVoice;
+        if (voice) {
+          utterance.voice = voice;
+          utterance.lang = voice.lang || "en-US";
+          selectedVoice = voice;
+        } else {
+          utterance.lang = "en-US";
+        }
+
+        utterance.onstart = () => {
+          setStatus("Andru is speaking…", "ok");
+        };
+        utterance.onend = () => {
+          if (fromHandsfree) {
+            dispatchVoice({ type: "SPEAK_ENDED" });
+          } else if (!busy && !listening) {
+            setStatus(
+              voiceMachine.mode === "handsfree" ? "Say Hey Andru" : "Ready.",
+              "ok",
+            );
+            syncVoiceUi();
+          }
+        };
+        utterance.onerror = () => {
+          if (fromHandsfree) dispatchVoice({ type: "SPEAK_ENDED" });
+        };
+        window.speechSynthesis.speak(utterance);
+      }
+
+      async function sendToAndru(message, options = {}) {
+        const fromHandsfree = Boolean(options.fromHandsfree);
+        const trimmed = (message || "").trim();
+        if (!trimmed) {
+          setStatus("No speech detected. Try again.", "error");
+          if (fromHandsfree) dispatchVoice({ type: "RECOVER" });
+          return;
+        }
+        if (busy) return;
+        busy = true;
+        micBtn.disabled = true;
+        if (fromHandsfree && voiceMachine.state !== "PROCESSING") {
+          dispatchVoice({ type: "COMMAND_CAPTURED", text: trimmed });
+        } else if (fromHandsfree) {
+          syncWakeDetector();
+        }
+        transcriptEl.textContent = trimmed;
+        replyEl.textContent = "…";
+        setStatus("Thinking…");
+        syncVoiceUi();
+
+        try {
+          const response = await fetch("/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: trimmed }),
+          });
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok) {
+            const details = data.details || data.error || response.statusText;
+            replyEl.textContent = "—";
+            setStatus("Chat failed: " + details, "error");
+            if (fromHandsfree) {
+              dispatchVoice({ type: "ERROR", message: String(details) });
+            }
+            return;
+          }
+          const reply = data.reply || "Done.";
+          replyEl.textContent = reply;
+          setStatus(data.provider ? "Provider: " + data.provider : "Done.", "ok");
+          const outcomes = await applyClientActions(data.clientActions);
+          const spoken = reconcileAssistantReply(reply, outcomes);
+          replyEl.textContent = spoken;
+          speak(spoken, { fromHandsfree });
+        } catch (error) {
+          replyEl.textContent = "—";
+          setStatus("Network error: " + (error.message || String(error)), "error");
+          if (fromHandsfree) {
+            dispatchVoice({
+              type: "ERROR",
+              message: error.message || String(error),
+            });
+          }
+        } finally {
+          busy = false;
+          micBtn.disabled = !SpeechRecognition;
+          syncWakeDetector();
+          syncVoiceUi();
+        }
+      }
+
+      async function resetConversation() {
+        window.speechSynthesis?.cancel();
+        setStatus("Clearing conversation…");
+        try {
+          const response = await fetch("/session/reset", { method: "POST" });
+          if (!response.ok) throw new Error("Reset failed");
+          transcriptEl.textContent = "—";
+          replyEl.textContent = "—";
+          finalTranscript = "";
+          try {
+            musicAudio.pause();
+            musicAudio.removeAttribute("src");
+            musicAudio.load();
+          } catch (_) {}
+          musicPendingPlay = null;
+          musicTrackId = null;
+          musicTitle = "";
+          musicArtist = "";
+          showMusicEnable(false);
+          setMusicMeta("Music idle — ask Andru to search or play a song.");
+          setStatus("Conversation cleared.", "ok");
+        } catch (error) {
+          setStatus("Could not clear conversation: " + (error.message || String(error)), "error");
+        }
+      }
+
+      function startListening() {
+        if (!recognition || listening || busy) return;
+        // Push-to-talk: pause wake so we don't double-capture
+        try {
+          wakeDetector && wakeDetector.stop();
+        } catch (_) {}
+        stopCommandListening();
+        finalTranscript = "";
+        pendingSend = true;
+        transcriptEl.textContent = "…";
+        setListening(true);
+        setStatus("Listening…", "ok");
+        try {
+          recognition.start();
+        } catch (_) {}
+      }
+
+      function stopListening() {
+        if (!recognition || !listening) return;
+        try {
+          recognition.stop();
+        } catch (_) {}
+      }
+
+      if (!SpeechRecognition) {
+        micBtn.disabled = true;
+        handsfreeSupported = false;
+        micHint.textContent =
+          "Voice input is not supported by this browser. Use a supported browser or type the message.";
+        setStatus("Speech recognition unavailable.", "error");
+        fallback.classList.add("visible");
+      } else {
+        recognition = new SpeechRecognition();
+        recognition.lang = "en-US";
+        recognition.interimResults = true;
+        recognition.continuous = false;
+        recognition.maxAlternatives = 1;
+
+        recognition.onresult = (event) => {
+          let interim = "";
+          let finalText = "";
+          for (let i = event.resultIndex; i < event.results.length; i += 1) {
+            const piece = event.results[i][0].transcript;
+            if (event.results[i].isFinal) finalText += piece;
+            else interim += piece;
+          }
+          if (finalText) finalTranscript = (finalTranscript + " " + finalText).trim();
+          transcriptEl.textContent = (finalTranscript || interim || "…").trim();
+        };
+
+        recognition.onerror = (event) => {
+          setListening(false);
+          pendingSend = false;
+          const err = event.error || "unknown";
+          if (err === "not-allowed") {
+            setStatus("Microphone permission denied.", "error");
+          } else if (err === "no-speech") {
+            setStatus("No speech detected.", "error");
+          } else {
+            setStatus("Speech recognition error: " + err, "error");
+          }
+        };
+
+        recognition.onend = () => {
+          const shouldSend = pendingSend;
+          pendingSend = false;
+          setListening(false);
+          if (shouldSend) {
+            sendToAndru(finalTranscript || transcriptEl.textContent);
+          }
+        };
+
+        const press = (event) => {
+          event.preventDefault();
+          startListening();
+        };
+        const release = (event) => {
+          event.preventDefault();
+          stopListening();
+        };
+
+        micBtn.addEventListener("mousedown", press);
+        micBtn.addEventListener("mouseup", release);
+        micBtn.addEventListener("mouseleave", () => {
+          if (listening) stopListening();
+        });
+        micBtn.addEventListener("touchstart", press, { passive: false });
+        micBtn.addEventListener("touchend", release);
+        micBtn.addEventListener("touchcancel", release);
+      }
+
+      if (window.speechSynthesis) {
+        refreshVoices();
+        if (typeof speechSynthesis.onvoiceschanged !== "undefined") {
+          speechSynthesis.onvoiceschanged = refreshVoices;
+        }
+      } else {
+        voiceSelect.disabled = true;
+        testVoiceBtn.disabled = true;
+      }
+
+      voiceSelect.addEventListener("change", () => {
+        const voices = window.speechSynthesis?.getVoices() || [];
+        selectedVoice = getSelectedVoiceFromUi(voices);
+        if (selectedVoice) {
+          localStorage.setItem(VOICE_STORAGE_KEY, selectedVoice.name);
+          setStatus("Voice set to " + selectedVoice.name + ".", "ok");
+        }
+      });
+
+      testVoiceBtn.addEventListener("click", () => {
+        speak("Hello. I am Andru. How can I help you?");
+      });
+
+      stopSpeakBtn.addEventListener("click", () => {
+        window.speechSynthesis?.cancel();
+        if (voiceMachine.state === "SPEAKING" || voiceMachine.state === "PROCESSING") {
+          dispatchVoice({ type: "SPEAK_ENDED" });
+        } else if (!busy && !listening) {
+          setStatus(
+            voiceMachine.mode === "handsfree" ? "Say Hey Andru" : "Ready.",
+          );
+        }
+      });
+      resetBtn.addEventListener("click", resetConversation);
+
+      modeHandsfreeBtn.addEventListener("click", () => setMode("handsfree"));
+      modePttBtn.addEventListener("click", () => setMode("pushtotalk"));
+      voiceStateBadge.addEventListener("click", () => {
+        if (voiceMachine.state === "ERROR") {
+          dispatchVoice({ type: "RECOVER" });
+          setStatus(
+            voiceMachine.mode === "handsfree"
+              ? "Hands-free ready — say Hey Andru."
+              : "Ready.",
+            "ok",
+          );
+        }
+      });
+
+      sendBtn.addEventListener("click", () => {
+        const value = textInput.value;
+        textInput.value = "";
+        sendToAndru(value);
+      });
+      textInput.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          sendBtn.click();
+        }
+      });
+
+      fallback.classList.add("visible");
+
+      initWakeDetector();
+      const savedMode = localStorage.getItem(VOICE_MODE_KEY);
+      const initialMode =
+        savedMode === "pushtotalk" || savedMode === "handsfree"
+          ? savedMode
+          : handsfreeSupported
+            ? "handsfree"
+            : "pushtotalk";
+      setMode(initialMode);
+    })();
+  </script>
+</body>
+</html>

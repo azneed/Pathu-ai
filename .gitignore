@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.env
+*.db
+*.db-journal
+data/
+.DS_Store
+
+# Graphify: keep shared graph artifacts, ignore local/cache data
+graphify-out/cache/
+graphify-out/.graphify_*
+graphify-out/manifest.json
+graphify-out/*/
