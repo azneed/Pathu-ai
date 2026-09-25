@@ -9,7 +9,7 @@ import { toolDefinitions } from "../src/ai/tools.js";
 import type { LLMChatInput, LLMChatResult, LLMProvider } from "../src/ai/types.js";
 
 describe("OpenRouterProvider", () => {
-  it("converts Andru messages including tool results", () => {
+  it("converts Pathu messages including tool results", () => {
     const messages = toOpenRouterMessages([
       { role: "system", content: "sys" },
       { role: "user", content: "set ac" },

@@ -37,7 +37,7 @@ export interface ListRoutinesFilter {
 export interface RoutineExecutionResult {
   /** Spec alias for truthful overall success. */
   success: boolean;
-  /** Same as success (existing Andru convention). */
+  /** Same as success (existing Pathu convention). */
   ok: boolean;
   routineId: string;
   routineName: string;

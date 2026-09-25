@@ -130,8 +130,8 @@ export class OpenRouterProvider implements LLMProvider {
         apiKey: options.apiKey || "missing",
         baseURL: options.baseUrl ?? OPENROUTER_DEFAULT_BASE_URL,
         defaultHeaders: {
-          "HTTP-Referer": "http://127.0.0.1:3000",
-          "X-Title": "Andru",
+          "HTTP-Referer": "http://127.0.0.1:3001",
+          "X-Title": "Pathu",
         },
       });
   }

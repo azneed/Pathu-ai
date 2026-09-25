@@ -14,7 +14,7 @@ export type WakeCallback = (event: WakeEvent) => void;
 
 /**
  * Browser-agnostic wake detector contract.
- * Implementations must not call Andru /chat or any LLM.
+ * Implementations must not call Pathu /chat or any LLM.
  */
 export interface WakeWordDetector {
   readonly kind: string;
@@ -64,16 +64,16 @@ export interface SpeechRecognitionResultEventLike {
  * Limitations (documented intentionally):
  * - Not a true on-device neural wake-word model.
  * - On Chromium, Web Speech recognition may send audio to the browser vendor
- *   (e.g. Google) for STT — audio does NOT go to Andru/Gemini/OpenRouter.
+ *   (e.g. Google) for STT — audio does NOT go to Pathu/Gemini/OpenRouter.
  * - False positives/negatives are more likely than with Porcupine custom models.
  *
- * True local "Hey Andru" requires a custom Porcupine (.ppn) model + AccessKey
+ * True local "Hey Pathu" requires a custom Porcupine (.ppn) model + AccessKey
  * (see PorcupineWakeWordDetector stub).
  */
 export class TranscriptWakeWordDetector implements WakeWordDetector {
   readonly kind = "transcript-webspeech";
   readonly privacyNote =
-    "Wake matching uses browser SpeechRecognition transcripts. Chromium may send microphone audio to the browser vendor for STT. Audio is not sent to Andru LLM providers. For fully local neural wake-word, configure a Porcupine custom model.";
+    "Wake matching uses browser SpeechRecognition transcripts. Chromium may send microphone audio to the browser vendor for STT. Audio is not sent to Pathu LLM providers. For fully local neural wake-word, configure a Porcupine custom model.";
 
   private callback: WakeCallback | null = null;
   private recognition: SpeechRecognitionLike | null = null;
@@ -186,12 +186,12 @@ export class TranscriptWakeWordDetector implements WakeWordDetector {
 /**
  * Placeholder for a future Picovoice Porcupine engine.
  * Not active until AccessKey + custom Web WASM .ppn models are provided.
- * Detection would be fully local (WASM); no mic audio to Andru LLMs.
+ * Detection would be fully local (WASM); no mic audio to Pathu LLMs.
  */
 export class PorcupineWakeWordDetector implements WakeWordDetector {
   readonly kind = "porcupine";
   readonly privacyNote =
-    "Porcupine runs wake-word inference locally in WebAssembly. Requires Picovoice AccessKey and a custom 'Hey Andru' .ppn model trained in Picovoice Console (Web WASM). Not configured in this build.";
+    "Porcupine runs wake-word inference locally in WebAssembly. Requires Picovoice AccessKey and a custom 'Hey Pathu' .ppn model trained in Picovoice Console (Web WASM). Not configured in this build.";
 
   onWake(_callback: WakeCallback): void {
     // no-op until configured
@@ -199,7 +199,7 @@ export class PorcupineWakeWordDetector implements WakeWordDetector {
 
   async start(): Promise<void> {
     throw new Error(
-      "Porcupine wake-word is not configured. Train a custom 'Hey Andru' Web WASM model in Picovoice Console and provide AccessKey + .ppn assets.",
+      "Porcupine wake-word is not configured. Train a custom 'Hey Pathu' Web WASM model in Picovoice Console and provide AccessKey + .ppn assets.",
     );
   }
 

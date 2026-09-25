@@ -1,5 +1,25 @@
 # Changelog
 
+## Phase 5 — Pathu Rebrand
+
+### Changed
+
+- User-facing assistant name: **Pathu** (was Andru)
+- Default wake phrases: `hey pathu` / `pathu` (legacy `hey andru` / `andru` no longer match by default)
+- `/voice` branding, status labels, and TTS intro copy
+- System prompt identity (`You are Pathu…`)
+- `/health` name: `pathu`
+- README / project docs; GitHub reference `azneed/Pathu-ai`
+- Development port docs: `127.0.0.1:3001`
+- Package metadata name: `pathu` (private package)
+
+### Unchanged
+
+- Architecture, tools, devices, routines, tasks, media, providers
+- Compatibility env/DB names (`ANDRU_TIMEZONE`, `./data/andru.db`)
+- Wake-word abstraction and voice state machine behavior
+- Push-to-talk fallback
+
 ## Phase 4.5 — Hands-Free Voice / Wake Word
 
 ### Added
@@ -8,13 +28,13 @@
 - `public/voice-core.js` — browser helpers for `/voice`
 - Hands-free + push-to-talk mode toggle on `/voice`
 - Explicit states: IDLE → LISTENING → PROCESSING → SPEAKING → IDLE (ERROR recover)
-- Transcript-based wake detector (interim) for “Hey Andru” / “Andru”
+- Transcript-based wake detector (interim); phrases later updated to Pathu in Phase 5
 - Porcupine stub documenting path to fully local custom wake models
 - Tests: `test/voice.wake.test.ts`
 
 ### Limitations
 
-- True neural on-device “Hey Andru” is **not** claimed: needs Picovoice custom `.ppn` + AccessKey.
+- True neural on-device wake is **not** claimed: needs Picovoice custom `.ppn` + AccessKey.
 - Chromium Web Speech may send audio to the browser vendor during wake listening.
 
 ## LLM Provider Cooldown + Fail-Fast

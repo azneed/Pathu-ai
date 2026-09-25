@@ -48,7 +48,7 @@ export function startServer() {
       port: config.PORT,
     },
     (info) => {
-      console.log(`Andru listening on http://${config.HOST}:${info.port}`);
+      console.log(`Pathu listening on http://${config.HOST}:${info.port}`);
       console.log(
         `AI providers: primary=${config.AI_PRIMARY}, fallback=${config.AI_FALLBACK ?? "none"}`,
       );
@@ -73,7 +73,7 @@ export function startServer() {
   );
 
   const shutdown = () => {
-    console.log("Shutting down Andru…");
+    console.log("Shutting down Pathu…");
     scheduler.stop();
     db.close();
     if (server && typeof (server as { close?: () => void }).close === "function") {

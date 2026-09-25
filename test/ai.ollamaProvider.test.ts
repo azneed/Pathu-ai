@@ -8,7 +8,7 @@ import { ProviderError } from "../src/ai/router.js";
 import { toolDefinitions } from "../src/ai/tools.js";
 
 describe("OllamaProvider", () => {
-  it("converts Andru messages including tool calls", () => {
+  it("converts Pathu messages including tool calls", () => {
     const messages = toOllamaMessages([
       { role: "system", content: "sys" },
       { role: "user", content: "fan speed 3" },

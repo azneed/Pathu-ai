@@ -1,6 +1,7 @@
-# Andru — Project Documentation
+# Pathu — Project Documentation
 
-Personal bedroom AI assistant (modular monolith).
+Personal bedroom AI assistant (modular monolith). Formerly developed under the working name **Andru**; current product identity is **Pathu**.  
+Repository: [azneed/Pathu-ai](https://github.com/azneed/Pathu-ai). Development server: `http://127.0.0.1:3001`.
 
 ## Architecture
 
@@ -15,7 +16,7 @@ Voice / HTTP client
 
 **Principles**
 
-- Andru owns intent (LLM + tools).
+- Pathu owns intent (LLM + tools).
 - Device adapters own actuation.
 - Device control always goes through `DeviceGateway` via `executeDeviceAction` / validated `set_*` tools.
 - No shell, OS automation, arbitrary URLs, or generic browser control.
@@ -34,6 +35,7 @@ Voice / HTTP client
 | YouTube | `src/youtube/` | Search + typed `clientActions` for `/voice` IFrame |
 | Audius | `src/music/` | Search + stream path + typed music `clientActions` |
 | Voice UI | `public/voice.html` | STT/TTS + YouTube/Audius players |
+| Wake helpers | `src/voice/` + `public/voice-core.js` | Phrases, state machine, wake detector abstraction |
 
 ## Routines / scenes (Phase 4)
 
@@ -48,76 +50,28 @@ SQLite table `routines`:
 
 Each action is the shared task shape:
 
-```json
-{ "tool": "set_ac", "arguments": { "power": "on", "temperature": 24 } }
-```
+`{ tool: "set_ac" | "set_fan" | "set_lights" | "set_rgb", arguments: { ... } }`
 
-Allowed tools: `set_ac`, `set_fan`, `set_lights`, `set_rgb` — validated by `validateDeviceAction` before persist and re-validated on execute via `executeDeviceAction`.
-
-Not allowed in routines: shell, HTTP, YouTube, Audius, arbitrary JS/URLs.
-
-### Service
-
-`RoutineService` (`src/routines/service.ts`):
-
-- `create` / `get` / `list` / `findByName` / `update` / `delete`
-- `execute(id, gateway)` — sequential; **stops on first failure**; returns truthful result:
-
-```json
-{
-  "success": true,
-  "ok": true,
-  "routineId": "...",
-  "routineName": "Bedtime",
-  "completedActions": 4,
-  "results": []
-}
-```
-
-On failure: `success: false`, `completedActions` = successes before stop, `failedActionIndex` (0-based), `error`.
+Validated with the same helpers as tasks (`validateDeviceAction` / `executeDeviceAction`).
 
 ### Tools
 
-- `list_routines`
-- `run_routine` (id or unambiguous name)
-- `create_routine`
-- `update_routine`
-- `delete_routine`
+`list_routines`, `run_routine`, `create_routine`, `update_routine`, `delete_routine`
 
-Create/update persist only; devices change only after a successful `run_routine`.
+### Execution
 
-### Routines vs tasks
-
-| | Routines | Tasks |
-|--|----------|-------|
-| Purpose | Reusable immediate scenes | Future / recurring execution |
-| When devices change | On `run_routine` | At due time via `TaskScheduler` |
-| Failure | Stop on first failed action | Task execute records all action outcomes |
-| Scheduling | Not in Phase 4 | Delayed / scheduled / recurring |
-
-A future task may eventually reference a routine id; that is not implemented yet.
+Sequential through DeviceGateway; **stops on first failure**. Results expose success, completed actions, and failed action index when applicable.
 
 ### REST
 
-- `GET /routines`
-- `GET /routines/:id`
-- `POST /routines`
-- `PATCH /routines/:id`
-- `DELETE /routines/:id`
-- `POST /routines/:id/run`
-
-Primary UX remains conversational `/chat` and `/voice`.
-
-## Tasks
-
-See `src/tasks/`. Scheduler runs in-process; due tasks execute through DeviceGateway without calling the LLM again.
+`GET/POST /routines`, `GET/PATCH/DELETE /routines/:id`, `POST /routines/:id/run`
 
 ## Media
 
 - **YouTube** — video IFrame on `/voice`; Data API key server-side.
 - **Audius** — HTMLAudioElement; `AUDIUS_API_KEY` server-side; `/music/stream/:trackId` resolves CDN URLs.
 
-## Voice / wake word (Phase 4.5)
+## Voice / wake word (Phase 4.5 + Phase 5)
 
 `/voice` supports **Hands-free** and **Push-to-talk**.
 
@@ -134,30 +88,34 @@ WakeWordDetector (browser)
 
 ### Wake-word engine (current)
 
-**TranscriptWakeWordDetector** (interim): continuous Web Speech API transcripts matched against configurable phrases (`hey andru`, `andru`).
+**TranscriptWakeWordDetector** (interim): continuous Web Speech API transcripts matched against configurable phrases (`hey pathu`, `pathu`).
 
-- Does **not** call Gemini/OpenRouter/Andru for wake detection.
-- On Chromium, Web Speech may send microphone audio to the **browser vendor** for STT (not to Andru LLM providers).
+- Does **not** call Gemini/OpenRouter/Pathu LLM providers for wake detection.
+- On Chromium, Web Speech may send microphone audio to the **browser vendor** for STT (not to Pathu LLM providers).
 - This is **not** a neural on-device wake model.
 
-**PorcupineWakeWordDetector** stub is reserved for a future fully local WASM engine. It requires a Picovoice AccessKey and a custom `Hey Andru` Web WASM `.ppn` model from Picovoice Console — not bundled in this phase.
+**PorcupineWakeWordDetector** stub is reserved for a future fully local WASM engine. It requires a Picovoice AccessKey and a custom `Hey Pathu` Web WASM `.ppn` model from Picovoice Console — not bundled yet.
 
 ### Supported phrases
 
-- `Hey Andru` (primary)
-- `Andru` (optional)
+- `Hey Pathu` (primary)
+- `Pathu` (optional)
 
-Single utterance: `Hey Andru, turn the AC to 23.` → command extracted → `/chat`.
+Legacy `Hey Andru` / `Andru` phrases are **not** active in the default configuration after Phase 5.
 
-Two-stage: `Hey Andru` → LISTENING → command → `/chat`.
+Single utterance: `Hey Pathu, turn the AC to 23.` → command extracted → `/chat`.
+
+Two-stage: `Hey Pathu` → LISTENING → command → `/chat`.
+
+Push-to-talk remains available as a fallback/manual mode.
 
 ### Privacy
 
-Wake matching must not stream raw mic audio to Andru LLM providers. Only the extracted command text is sent to `/chat`.
+Wake matching must not stream raw mic audio to Pathu LLM providers. Only the extracted command text is sent to `/chat`.
 
 ### LLM provider cooldown
 
-`AI_PROVIDER_COOLDOWN_SECONDS` (default `300`) controls how long Andru skips a provider after **HTTP 429 / quota / rate-limit / resource exhausted** errors.
+`AI_PROVIDER_COOLDOWN_SECONDS` (default `300`) controls how long Pathu skips a provider after **HTTP 429 / quota / rate-limit / resource exhausted** errors.
 
 Behavior (in-memory only; no DB):
 
@@ -169,3 +127,19 @@ Behavior (in-memory only; no DB):
 Timeouts / 5xx still fall back as before but do **not** enter cooldown.
 
 `AI_PRIMARY` / `AI_FALLBACK` (e.g. `gemini` → `openrouter`) are unchanged. Ollama remains selectable.
+
+### Compatibility names
+
+Some technical identifiers retain the historical Andru prefix for stability, including:
+
+- `ANDRU_TIMEZONE`
+- default `DATABASE_PATH=./data/andru.db`
+- browser `localStorage` keys `andru_tts_voice` / `andru_voice_mode`
+
+## Graphify
+
+Use the installed CLI (no obsolete flags):
+
+```bash
+graphify update .
+```

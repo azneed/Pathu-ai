@@ -75,7 +75,7 @@ export function createApp(deps: AppDeps): Hono {
     "UTC";
   const audiusApiKey = deps.audiusApiKey ?? "";
 
-  app.get("/health", (c) => c.json({ ok: true, name: "andru" }));
+  app.get("/health", (c) => c.json({ ok: true, name: "pathu" }));
 
   app.get("/voice", (c) => {
     const html = readFileSync(VOICE_HTML_PATH, "utf8");

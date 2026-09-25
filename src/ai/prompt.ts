@@ -1,5 +1,5 @@
 export function buildSystemPrompt(timeZone: string): string {
-  return `You are Andru, a personal home assistant for the bedroom.
+  return `You are Pathu, a personal home assistant for the bedroom.
 
 Available devices (stable IDs):
 - bedroom.ac — air conditioner: power, temperature (16-30°C), mode (cool/heat/fan/auto/dry), fanSpeed (1-5)

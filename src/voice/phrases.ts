@@ -1,6 +1,6 @@
 /** Shared wake-phrase matching and command extraction (no browser APIs). */
 
-export const DEFAULT_WAKE_PHRASES = ["hey andru", "andru"] as const;
+export const DEFAULT_WAKE_PHRASES = ["hey pathu", "pathu"] as const;
 
 export function normalizeSpeech(text: string): string {
   return text
@@ -12,7 +12,7 @@ export function normalizeSpeech(text: string): string {
 
 /**
  * Find the earliest wake phrase match in normalized speech.
- * Prefers longer phrases first ("hey andru" before "andru").
+ * Prefers longer phrases first ("hey pathu" before "pathu").
  */
 export function findWakeMatch(
   transcript: string,
@@ -47,7 +47,7 @@ export function escapeRegExp(value: string): string {
 }
 
 /**
- * Split "Hey Andru, turn the AC to 23" into wake + command.
+ * Split "Hey Pathu, turn the AC to 23" into wake + command.
  * Returns command="" when only the wake phrase was spoken.
  */
 export function extractCommandAfterWake(

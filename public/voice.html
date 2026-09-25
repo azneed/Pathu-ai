@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Andru Voice</title>
+  <title>Pathu Voice</title>
   <style>
     :root {
       --bg: #12151a;
@@ -286,19 +286,19 @@
 </head>
 <body>
   <main>
-    <h1>Andru</h1>
+    <h1>Pathu</h1>
     <p class="subtitle">Local voice interface — same chat brain as the API</p>
 
     <div class="mode-row" role="group" aria-label="Voice mode">
       <button id="modeHandsfreeBtn" type="button" class="active">Hands-free</button>
       <button id="modePttBtn" type="button">Push-to-talk</button>
     </div>
-    <div id="voiceStateBadge">Say Hey Andru</div>
+    <div id="voiceStateBadge">Say Hey Pathu</div>
     <p id="wakePrivacy"></p>
 
     <div class="mic-wrap">
       <button id="micBtn" type="button" aria-label="Hold to talk">Hold to talk</button>
-      <div class="hint" id="micHint">Hands-free: say “Hey Andru”. Or switch to push-to-talk.</div>
+      <div class="hint" id="micHint">Hands-free: say “Hey Pathu”. Or switch to push-to-talk.</div>
     </div>
 
     <div class="voice-row">
@@ -310,7 +310,7 @@
     <div class="yt-section">
       <span class="label">YouTube</span>
       <div id="ytPlayerHost"></div>
-      <div id="ytMeta">Player idle — ask Andru to search or play a video.</div>
+      <div id="ytMeta">Player idle — ask Pathu to search or play a video.</div>
       <div style="margin-top: 8px;">
         <button id="ytEnableBtn" type="button">Enable YouTube audio</button>
         <a id="ytWatchLink" href="#" target="_blank" rel="noopener noreferrer">Watch on YouTube</a>
@@ -320,7 +320,7 @@
     <div class="music-section">
       <span class="label">Audius music</span>
       <audio id="musicAudio" preload="none"></audio>
-      <div id="musicMeta">Music idle — ask Andru to search or play a song.</div>
+      <div id="musicMeta">Music idle — ask Pathu to search or play a song.</div>
       <button id="musicEnableBtn" type="button">Enable music audio</button>
     </div>
 
@@ -330,7 +330,7 @@
     </div>
 
     <div class="block">
-      <span class="label">Andru</span>
+      <span class="label">Pathu</span>
       <div class="value" id="reply">—</div>
     </div>
 
@@ -351,9 +351,9 @@
   <script src="https://www.youtube.com/iframe_api"></script>
   <script>
     (() => {
-      const Core = window.AndruVoiceCore;
+      const Core = window.PathuVoiceCore;
       if (!Core) {
-        console.error("AndruVoiceCore missing — /voice-core.js failed to load");
+        console.error("PathuVoiceCore missing — /voice-core.js failed to load");
       }
 
       const micBtn = document.getElementById("micBtn");
@@ -461,9 +461,9 @@
 
         if (handsfree) {
           micHint.textContent =
-            "Hands-free: say “Hey Andru” or “Hey Andru, …” — push-to-talk still works if you hold the button.";
+            "Hands-free: say “Hey Pathu” or “Hey Pathu, …” — push-to-talk still works if you hold the button.";
           micBtn.textContent =
-            voiceMachine.state === "LISTENING" ? "Listening…" : "Say Hey Andru";
+            voiceMachine.state === "LISTENING" ? "Pathu is listening…" : "Say Hey Pathu";
         } else {
           micHint.textContent = "Press and hold the microphone, then release to send.";
           micBtn.textContent = listening ? "Listening…" : "Hold to talk";
@@ -508,7 +508,7 @@
         syncWakeDetector();
         setStatus(
           mode === "handsfree"
-            ? "Hands-free on — say Hey Andru."
+            ? "Hands-free on — say Hey Pathu."
             : "Push-to-talk mode.",
           "ok",
         );
@@ -549,7 +549,7 @@
           const err = event.error || "unknown";
           if (err === "no-speech") {
             dispatchVoice({ type: "RECOVER" });
-            setStatus("No speech detected. Say Hey Andru again.", "error");
+            setStatus("No speech detected. Say Hey Pathu again.", "error");
             return;
           }
           dispatchVoice({ type: "ERROR", message: err });
@@ -560,11 +560,11 @@
           const text = (finalText || transcriptEl.textContent || "").trim();
           if (!text || text === "…") {
             dispatchVoice({ type: "RECOVER" });
-            setStatus("No command heard. Say Hey Andru again.", "error");
+            setStatus("No command heard. Say Hey Pathu again.", "error");
             return;
           }
           dispatchVoice({ type: "COMMAND_CAPTURED", text: text });
-          void sendToAndru(text, { fromHandsfree: true });
+          void sendToPathu(text, { fromHandsfree: true });
         };
         try {
           rec.start();
@@ -582,7 +582,7 @@
         transcriptEl.textContent = event.rawTranscript || event.phrase;
         dispatchVoice({ type: "WAKE", command: event.command || "" });
         if (event.command && event.command.trim()) {
-          void sendToAndru(event.command.trim(), { fromHandsfree: true });
+          void sendToPathu(event.command.trim(), { fromHandsfree: true });
         } else {
           startCommandListening();
         }
@@ -696,7 +696,7 @@
         if (status === "player_error") {
           return label ? ("Music error (" + label + ")") : "Music player error";
         }
-        return "Music idle — ask Andru to search or play a song.";
+        return "Music idle — ask Pathu to search or play a song.";
       }
 
       function truthfulPlaybackReply(status, title, kind) {
@@ -1474,14 +1474,14 @@
         }
 
         utterance.onstart = () => {
-          setStatus("Andru is speaking…", "ok");
+          setStatus("Pathu is speaking…", "ok");
         };
         utterance.onend = () => {
           if (fromHandsfree) {
             dispatchVoice({ type: "SPEAK_ENDED" });
           } else if (!busy && !listening) {
             setStatus(
-              voiceMachine.mode === "handsfree" ? "Say Hey Andru" : "Ready.",
+              voiceMachine.mode === "handsfree" ? "Say Hey Pathu" : "Ready.",
               "ok",
             );
             syncVoiceUi();
@@ -1493,7 +1493,7 @@
         window.speechSynthesis.speak(utterance);
       }
 
-      async function sendToAndru(message, options = {}) {
+      async function sendToPathu(message, options = {}) {
         const fromHandsfree = Boolean(options.fromHandsfree);
         const trimmed = (message || "").trim();
         if (!trimmed) {
@@ -1573,7 +1573,7 @@
           musicTitle = "";
           musicArtist = "";
           showMusicEnable(false);
-          setMusicMeta("Music idle — ask Andru to search or play a song.");
+          setMusicMeta("Music idle — ask Pathu to search or play a song.");
           setStatus("Conversation cleared.", "ok");
         } catch (error) {
           setStatus("Could not clear conversation: " + (error.message || String(error)), "error");
@@ -1648,7 +1648,7 @@
           pendingSend = false;
           setListening(false);
           if (shouldSend) {
-            sendToAndru(finalTranscript || transcriptEl.textContent);
+            sendToPathu(finalTranscript || transcriptEl.textContent);
           }
         };
 
@@ -1691,7 +1691,7 @@
       });
 
       testVoiceBtn.addEventListener("click", () => {
-        speak("Hello. I am Andru. How can I help you?");
+        speak("Hello. I am Pathu. How can I help you?");
       });
 
       stopSpeakBtn.addEventListener("click", () => {
@@ -1700,7 +1700,7 @@
           dispatchVoice({ type: "SPEAK_ENDED" });
         } else if (!busy && !listening) {
           setStatus(
-            voiceMachine.mode === "handsfree" ? "Say Hey Andru" : "Ready.",
+            voiceMachine.mode === "handsfree" ? "Say Hey Pathu" : "Ready.",
           );
         }
       });
@@ -1713,7 +1713,7 @@
           dispatchVoice({ type: "RECOVER" });
           setStatus(
             voiceMachine.mode === "handsfree"
-              ? "Hands-free ready — say Hey Andru."
+              ? "Hands-free ready — say Hey Pathu."
               : "Ready.",
             "ok",
           );
@@ -1723,7 +1723,7 @@
       sendBtn.addEventListener("click", () => {
         const value = textInput.value;
         textInput.value = "";
-        sendToAndru(value);
+        sendToPathu(value);
       });
       textInput.addEventListener("keydown", (event) => {
         if (event.key === "Enter") {

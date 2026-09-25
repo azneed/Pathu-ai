@@ -75,7 +75,7 @@ function parseToolArgs(args: unknown): Record<string, unknown> {
   });
 }
 
-/** Convert Andru messages into Gemini contents + system instruction. */
+/** Convert Pathu messages into Gemini contents + system instruction. */
 export function toGeminiRequest(messages: ChatMessage[]): {
   systemInstruction?: string;
   contents: Array<{ role: string; parts: unknown[] }>;

@@ -1,6 +1,7 @@
-# Andru
+# Pathu
 
-Personal AI assistant vertical slice:
+Personal AI assistant (formerly developed as Andru).  
+GitHub: [azneed/Pathu-ai](https://github.com/azneed/Pathu-ai)
 
 `POST /chat` → LLM provider (Gemini primary, OpenRouter fallback) → tool calling → DeviceGateway → simulated bedroom devices → persisted state.
 
@@ -13,6 +14,8 @@ Phases:
 - **3.5** — restricted YouTube control (Data API search + embedded IFrame player on `/voice` only)
 - **3.6** — Audius music (search + HTMLAudioElement playback on `/voice`; separate from YouTube)
 - **4** — persistent Routines/Scenes (named sequences of validated device actions)
+- **4.5** — hands-free wake word + push-to-talk on `/voice`
+- **5** — Pathu rebrand (assistant name + wake phrases)
 
 ## Setup
 
@@ -28,9 +31,9 @@ Requires Node.js 22+ (uses built-in `node:sqlite`).
 
 AI routing: `AI_PRIMARY` / `AI_FALLBACK` (default: `gemini` → `openrouter` with `openrouter/free`). Ollama remains selectable but is not required.
 
-Provider cooldown: `AI_PROVIDER_COOLDOWN_SECONDS` (default `300`). After a 429/quota/rate-limit error, that provider is skipped for N seconds and Andru falls back immediately; if all providers are cooling down, `/chat` fails fast.
+Provider cooldown: `AI_PROVIDER_COOLDOWN_SECONDS` (default `300`). After a 429/quota/rate-limit error, that provider is skipped for N seconds and Pathu falls back immediately; if all providers are cooling down, `/chat` fails fast.
 
-Timezone for clock-based schedules: `ANDRU_TIMEZONE` (IANA name, defaults to the OS timezone).
+Timezone for clock-based schedules: `ANDRU_TIMEZONE` (IANA name, defaults to the OS timezone; name retained for compatibility).
 
 ## Run
 
@@ -38,19 +41,21 @@ Timezone for clock-based schedules: `ANDRU_TIMEZONE` (IANA name, defaults to the
 npm start
 ```
 
-Binds to `127.0.0.1:3000` by default.
+Binds to `127.0.0.1:3001` by default.
 
 Open the voice UI:
 
-http://127.0.0.1:3000/voice
+http://127.0.0.1:3001/voice
 
 Use a Chromium-based browser for best Web Speech API support.
 
-**Voice modes:** Hands-free (`Hey Andru` / `Hey Andru, …`) or Push-to-talk (hold mic). Typed input remains available. Wake matching is an interim transcript-based detector — see docs for privacy/limitations.
+**Voice modes:** Hands-free (`Hey Pathu` / `Hey Pathu, …`) or Push-to-talk (hold mic). Typed input remains available. Wake matching is an interim transcript-based detector — see docs for privacy/limitations.
+
+**Manual hands-free Chrome E2E:** verified working (wake → listen → `/chat` → TTS → idle).
 
 ## YouTube (restricted)
 
-Andru can search and control **only** the YouTube player embedded in `/voice`.
+Pathu can search and control **only** the YouTube player embedded in `/voice`.
 
 - Server uses YouTube Data API v3 with `YOUTUBE_API_KEY` (never sent to the browser).
 - Tools: `youtube_search`, `youtube_play`, `youtube_pause`, `youtube_resume`, `youtube_stop`, `youtube_next`, `youtube_previous`, `youtube_set_volume`.
@@ -65,7 +70,7 @@ Examples: "Play the Interstellar trailer.", "Pause.", "Set YouTube volume to 30.
 
 ## Audius music (restricted)
 
-Andru can search and play **music** via Audius on the `/voice` page audio element (separate from YouTube video).
+Pathu can search and play **music** via Audius on the `/voice` page audio element (separate from YouTube video).
 
 - Server uses the Audius API with `AUDIUS_API_KEY` (never sent to the browser).
 - Tools: `music_search`, `music_play`, `music_pause`, `music_resume`, `music_stop`, `music_next`, `music_previous`, `music_set_volume`.
@@ -75,7 +80,7 @@ Andru can search and play **music** via Audius on the `/voice` page audio elemen
 
 **Separation:** YouTube = video / visual content. Audius = music / audio. Do not use YouTube extraction for music.
 
-**Chrome autoplay:** same rules as YouTube — if blocked, use **Enable music audio**. Output follows the OS/browser device (e.g. Xiaomi Bluetooth speaker when that is the active Windows output). Andru does not manage Bluetooth pairing.
+**Chrome autoplay:** same rules as YouTube — if blocked, use **Enable music audio**. Output follows the OS/browser device (e.g. Xiaomi Bluetooth speaker when that is the active Windows output). Pathu does not manage Bluetooth pairing.
 
 Examples: "Play some music.", "Play Tum Hi Ho.", "Search Audius for relaxing music.", "Pause.", "Set music volume to 30."
 
@@ -97,7 +102,7 @@ Examples: "Create a bedtime routine…", "Run bedtime.", "What routines do I hav
 
 ## Tasks & scheduling
 
-Andru can schedule future **device** actions. The LLM interprets natural language; Andru stores structured actions in SQLite and executes them locally through DeviceGateway — **without** calling Gemini again at due time.
+Pathu can schedule future **device** actions. The LLM interprets natural language; Pathu stores structured actions in SQLite and executes them locally through DeviceGateway — **without** calling Gemini again at due time.
 
 YouTube/music scheduling is not included in this version.
 
@@ -130,15 +135,21 @@ Clears the default conversation history plus YouTube and Audius session search/p
 ### `GET /devices`
 
 ```bash
-curl http://127.0.0.1:3000/devices
+curl http://127.0.0.1:3001/devices
 ```
 
 ### `POST /chat`
 
 ```bash
-curl -X POST http://127.0.0.1:3000/chat ^
+curl -X POST http://127.0.0.1:3001/chat ^
   -H "Content-Type: application/json" ^
   -d "{\"message\":\"Turn the AC on and set it to 23 degrees.\"}"
+```
+
+### `GET /health`
+
+```json
+{ "ok": true, "name": "pathu" }
 ```
 
 ## Tests
@@ -146,4 +157,12 @@ curl -X POST http://127.0.0.1:3000/chat ^
 ```bash
 npm test
 npm run typecheck
+```
+
+## Graphify
+
+Refresh the code graph (no LLM required):
+
+```bash
+graphify update .
 ```

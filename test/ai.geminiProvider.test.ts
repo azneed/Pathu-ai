@@ -9,14 +9,14 @@ import { toolDefinitions } from "../src/ai/tools.js";
 
 const sampleInput: LLMChatInput = {
   messages: [
-    { role: "system", content: "You are Andru." },
+    { role: "system", content: "You are Pathu." },
     { role: "user", content: "Turn AC to 22" },
   ],
   tools: toolDefinitions,
 };
 
 describe("GeminiProvider", () => {
-  it("converts Andru messages into Gemini contents and system instruction", () => {
+  it("converts Pathu messages into Gemini contents and system instruction", () => {
     const converted = toGeminiRequest([
       { role: "system", content: "sys" },
       { role: "user", content: "hi" },

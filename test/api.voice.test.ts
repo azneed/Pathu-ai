@@ -38,15 +38,17 @@ describe("voice HTTP routes", () => {
     const response = await app.request("/voice");
     expect(response.status).toBe(200);
     const html = await response.text();
-    expect(html).toContain("Andru");
+    expect(html).toContain("Pathu");
     expect(html).toContain("Hold to talk");
     expect(html).toContain("/chat");
     expect(html).toContain("Hands-free");
     expect(html).toContain("Push-to-talk");
     expect(html).toContain("/voice-core.js");
+    expect(html).toContain("Say Hey Pathu");
     expect(html).toContain('id="musicAudio"');
     expect(html).toContain("Enable music audio");
     expect(html).not.toContain("AUDIUS_API_KEY");
+    expect(html).not.toContain("Hey Andru");
     expect(response.headers.get("content-type") ?? "").toMatch(/html/i);
   });
 
@@ -55,9 +57,11 @@ describe("voice HTTP routes", () => {
     const response = await app.request("/voice-core.js");
     expect(response.status).toBe(200);
     const js = await response.text();
-    expect(js).toContain("AndruVoiceCore");
+    expect(js).toContain("PathuVoiceCore");
+    expect(js).toContain("hey pathu");
     expect(js).toContain("extractCommandAfterWake");
     expect(js).toContain("createTranscriptWakeDetector");
+    expect(js).not.toContain("hey andru");
     expect(response.headers.get("content-type") ?? "").toMatch(/javascript/i);
   });
 

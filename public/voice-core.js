@@ -1,11 +1,11 @@
 /**
- * Browser copy of Andru voice wake/state helpers (kept in sync with src/voice/*).
- * Attaches to window.AndruVoiceCore for the /voice page IIFE.
+ * Browser copy of Pathu voice wake/state helpers (kept in sync with src/voice/*).
+ * Attaches to window.PathuVoiceCore for the /voice page IIFE.
  */
 (function (global) {
   "use strict";
 
-  var DEFAULT_WAKE_PHRASES = ["hey andru", "andru"];
+  var DEFAULT_WAKE_PHRASES = ["hey pathu", "pathu"];
 
   function escapeRegExp(value) {
     return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -151,18 +151,18 @@
 
   function statusLabelForState(state, mode) {
     if (state === "IDLE") {
-      return mode === "handsfree" ? "Say Hey Andru" : "Ready — hold to talk";
+      return mode === "handsfree" ? "Say Hey Pathu" : "Ready — hold to talk";
     }
-    if (state === "LISTENING") return "Listening…";
+    if (state === "LISTENING") return "Pathu is listening…";
     if (state === "PROCESSING") return "Thinking…";
-    if (state === "SPEAKING") return "Andru is speaking…";
+    if (state === "SPEAKING") return "Pathu is speaking…";
     if (state === "ERROR") return "Voice unavailable — tap to retry";
     return "Ready.";
   }
 
   /**
    * Transcript-based wake detector (interim engine).
-   * Chromium may send mic audio to the browser vendor for STT — not to Andru LLMs.
+   * Chromium may send mic audio to the browser vendor for STT — not to Pathu LLMs.
    */
   function createTranscriptWakeDetector(options) {
     var phrases = options.phrases || DEFAULT_WAKE_PHRASES;
@@ -220,7 +220,7 @@
     return {
       kind: "transcript-webspeech",
       privacyNote:
-        "Wake matching uses browser SpeechRecognition. Chromium may send mic audio to the browser vendor for STT. Not sent to Andru LLM providers. Local Porcupine custom model is the future path.",
+        "Wake matching uses browser SpeechRecognition. Chromium may send mic audio to the browser vendor for STT. Not sent to Pathu LLM providers. Local Porcupine custom model is the future path.",
       onWake: function (cb) {
         callback = cb;
       },
@@ -246,7 +246,7 @@
     };
   }
 
-  global.AndruVoiceCore = {
+  global.PathuVoiceCore = {
     DEFAULT_WAKE_PHRASES: DEFAULT_WAKE_PHRASES,
     normalizeSpeech: normalizeSpeech,
     extractCommandAfterWake: extractCommandAfterWake,

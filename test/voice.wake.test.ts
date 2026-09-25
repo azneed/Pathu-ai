@@ -21,33 +21,39 @@ import {
 
 describe("wake phrases", () => {
   it("normalizes speech", () => {
-    expect(normalizeSpeech("  Hey, ANDRU!! ")).toBe("hey andru");
+    expect(normalizeSpeech("  Hey, PATHU!! ")).toBe("hey pathu");
   });
 
-  it("matches hey andru and andru", () => {
-    expect(matchesWakePhrase("Hey Andru")).toBe(true);
-    expect(matchesWakePhrase("andru")).toBe(true);
-    expect(matchesWakePhrase("hey android")).toBe(false);
+  it("matches hey pathu and pathu", () => {
+    expect(matchesWakePhrase("Hey Pathu")).toBe(true);
+    expect(matchesWakePhrase("pathu")).toBe(true);
+    expect(matchesWakePhrase("hey pathfinder")).toBe(false);
+  });
+
+  it("does not match legacy Andru wake phrases by default", () => {
+    expect(matchesWakePhrase("Hey Andru")).toBe(false);
+    expect(matchesWakePhrase("andru")).toBe(false);
+    expect(matchesWakePhrase("Andru, turn the lights off.")).toBe(false);
   });
 
   it("extracts command from single utterance", () => {
     const result = extractCommandAfterWake(
-      "Hey Andru, turn the AC to 23.",
+      "Hey Pathu, turn the AC to 23.",
     );
     expect(result.woke).toBe(true);
-    expect(result.phrase).toBe("hey andru");
+    expect(result.phrase).toBe("hey pathu");
     expect(result.command).toMatch(/turn the ac to 23/i);
   });
 
   it("wake only yields empty command", () => {
-    const result = extractCommandAfterWake("Hey Andru");
+    const result = extractCommandAfterWake("Hey Pathu");
     expect(result.woke).toBe(true);
     expect(result.command).toBe("");
   });
 
-  it("prefers longer phrase hey andru over andru", () => {
-    const match = findWakeMatch("hey andru turn lights off");
-    expect(match?.phrase).toBe("hey andru");
+  it("prefers longer phrase hey pathu over pathu", () => {
+    const match = findWakeMatch("hey pathu turn lights off");
+    expect(match?.phrase).toBe("hey pathu");
   });
 });
 
@@ -57,6 +63,7 @@ describe("voice state machine", () => {
     s = reduceVoiceState(s, { type: "WAKE" });
     expect(s.state).toBe("LISTENING");
     expect(shouldRunWakeDetector(s)).toBe(false);
+    expect(statusLabelForState(s.state, s.mode)).toMatch(/Pathu is listening/i);
   });
 
   it("IDLE → PROCESSING on wake with command", () => {
@@ -84,9 +91,11 @@ describe("voice state machine", () => {
     s = reduceVoiceState(s, { type: "WAKE", command: "hi" });
     s = reduceVoiceState(s, { type: "SPEAK_STARTED" });
     expect(s.state).toBe("SPEAKING");
+    expect(statusLabelForState(s.state, s.mode)).toMatch(/Pathu is speaking/i);
     s = reduceVoiceState(s, { type: "SPEAK_ENDED" });
     expect(s.state).toBe("IDLE");
     expect(shouldRunWakeDetector(s)).toBe(true);
+    expect(statusLabelForState(s.state, s.mode)).toMatch(/Say Hey Pathu/i);
   });
 
   it("ignores wake while PROCESSING or SPEAKING", () => {
@@ -152,9 +161,9 @@ describe("wake word detector abstraction", () => {
     await detector.start();
     expect(started).toBe(true);
 
-    detector.handleTranscriptForTests("Hey Andru turn the AC to 23", true);
+    detector.handleTranscriptForTests("Hey Pathu turn the AC to 23", true);
     expect(wakes).toHaveLength(1);
-    expect(wakes[0]?.phrase).toBe("hey andru");
+    expect(wakes[0]?.phrase).toBe("hey pathu");
     expect(wakes[0]?.command).toMatch(/turn the ac to 23/i);
 
     detector.stop();
@@ -181,10 +190,10 @@ describe("wake word detector abstraction", () => {
     const spy = vi.fn();
     detector.onWake(spy);
     await detector.start();
-    detector.handleTranscriptForTests("Hey Andru", true);
+    detector.handleTranscriptForTests("Hey Pathu", true);
     expect(spy).not.toHaveBeenCalled();
     armed = true;
-    detector.handleTranscriptForTests("Hey Andru lights off", true);
+    detector.handleTranscriptForTests("Hey Pathu lights off", true);
     expect(spy).toHaveBeenCalledOnce();
   });
 

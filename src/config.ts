@@ -33,7 +33,7 @@ const envSchema = z.object({
     .transform((value) => value.trim()),
   OPENAI_MODEL: z.string().default("gpt-4o-mini"),
 
-  PORT: z.coerce.number().int().positive().default(3000),
+  PORT: z.coerce.number().int().positive().default(3001),
   HOST: z.string().default("127.0.0.1"),
   DATABASE_PATH: z.string().default("./data/andru.db"),
 

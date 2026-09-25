@@ -143,13 +143,13 @@ export function reduceVoiceState(
 export function statusLabelForState(state: VoiceState, mode: VoiceMode): string {
   switch (state) {
     case "IDLE":
-      return mode === "handsfree" ? "Say Hey Andru" : "Ready — hold to talk";
+      return mode === "handsfree" ? "Say Hey Pathu" : "Ready — hold to talk";
     case "LISTENING":
-      return "Listening…";
+      return "Pathu is listening…";
     case "PROCESSING":
       return "Thinking…";
     case "SPEAKING":
-      return "Andru is speaking…";
+      return "Pathu is speaking…";
     case "ERROR":
       return "Voice unavailable — tap to retry";
     default:
