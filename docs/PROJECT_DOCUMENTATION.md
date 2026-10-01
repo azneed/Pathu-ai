@@ -6,7 +6,7 @@ Repository: [azneed/Pathu-ai](https://github.com/azneed/Pathu-ai). Development s
 ## Architecture
 
 ```
-Voice / HTTP client
+Voice / HTTP / Mobile client
     → POST /chat
     → LLM provider (Gemini primary, OpenRouter fallback)
     → validated tools
@@ -21,6 +21,7 @@ Voice / HTTP client
 - Device control always goes through `DeviceGateway` via `executeDeviceAction` / validated `set_*` tools.
 - No shell, OS automation, arbitrary URLs, or generic browser control.
 - YouTube and Audius are separate restricted media surfaces on `/voice`.
+- The Android app is a thin client over the same `/chat` API (no on-device LLM).
 
 ## Modules
 
@@ -36,6 +37,94 @@ Voice / HTTP client
 | Audius | `src/music/` | Search + stream path + typed music `clientActions` |
 | Voice UI | `public/voice.html` | STT/TTS + YouTube/Audius players |
 | Wake helpers | `src/voice/` + `public/voice-core.js` | Phrases, state machine, wake detector abstraction |
+| Mobile | `mobile/pathu/` | Expo Android client (text chat → `/chat`) |
+
+## Mobile Android client (Phase 6 · COMPLETE)
+
+Location: `mobile/pathu` (Expo SDK 57 + `expo-dev-client`).
+
+```
+Mobile UI
+  → src/api (fetch)
+  → http://127.0.0.1:3001  (USB: adb reverse tcp:3001)
+  → existing POST /chat
+```
+
+### Dev command
+
+From `mobile/pathu`:
+
+```bash
+npm run dev:android
+```
+
+Requires the Pathu backend already listening on **3001**. The helper sets JDK 17, verifies ADB, reverses **8081** (Metro) and **3001** (API), and opens the installed development build.
+
+### Config
+
+```bash
+EXPO_PUBLIC_API_BASE_URL=http://127.0.0.1:3001
+```
+
+See `mobile/pathu/.env.example`. Do not use a LAN IP for the USB workflow.
+
+### Chat contract (unchanged)
+
+- Request: `{ "message": string }`
+- Success: `{ "reply": string, "devices": ..., "toolTrace": ..., ... }`
+- Errors: `{ "error": string, "details"?: ... }` with non-2xx status
+
+Mic control opens the foreground voice loop (Phase 7).
+
+## Mobile wake word (Phase 7A · experiment COMPLETE · foreground)
+
+**Status:** COMPLETE as an experiment. The sherpa-onnx pipeline runs end-to-end on-device (the known-good WAV self-test detects `HEY PATHU`), but the current GigaSpeech KWS model does **not** reliably recognize the user's own spoken “Hey Pathu” on the physical iQOO Neo 10R. Offline analysis of a clear stock-recorder capture showed the model decoding the phrase as “HELLO”-like tokens; capture format, cadence and mic ownership were verified correct. This implementation stays as the baseline until it is replaced.
+
+**Next architecture (planned, not implemented):** custom openWakeWord “Hey Pathu” model + native Android voice core.
+
+Engine: **sherpa-onnx** open-vocabulary keyword spotting. Fully local on-device.
+
+- Package: `@siteed/sherpa-onnx.rn`
+- Mic PCM: `react-native-live-audio-stream` (16 kHz mono PCM16 → float32)
+- Models: English GigSpeech KWS int8 (`assets/wakeword/sherpa-kws-en/`; fetch with `scripts/fetch-kws-models.ps1`)
+- Keyword file: `keywords.txt` encodes **HEY PATHU** (BPE; no custom neural training / no Picovoice `.ppn`)
+- Phase 7A is **foreground only** (app open / unlocked)
+
+## Mobile foreground voice conversation (Phase 7)
+
+**Status:** COMPLETE — foreground loop wired and verified on physical Android when the app is open.
+
+Flow:
+
+1. Local KWS detects **“Hey Pathu”**
+2. KWS stops and releases the microphone
+3. `expo-speech-recognition` captures one command (`en-US`; prefers on-device when `supportsOnDeviceRecognition()` is true, else Android system/remote STT)
+4. Final transcript → existing mobile `POST /chat`
+5. Real `reply` spoken with `expo-speech`
+6. KWS restarts for the next wake
+
+- Orchestrator: `mobile/pathu/src/voice/`
+- STT/TTS: `mobile/pathu/src/speech/`
+- One command per wake (no continuous open-mic conversation)
+- Do **not** claim command STT is fully offline unless the device reports on-device recognition
+- Locked-screen / background / always-on wake is **Phase 7B**
+
+Native rebuild is required after adding speech modules. Day-to-day: `npm run dev:android`.
+
+## Phase 7B.1 — Android microphone foreground service / locked-screen wake baseline
+
+**Status:** Foreground service implemented; locked-screen wake remains **pending** because the current wake model is unsuitable for the user's voice. On the physical iQOO Neo 10R the microphone FGS keeps a single unsilenced `MIC` recorder and the KWS consuming live audio while the screen is locked; stop/restart/duplicate-start/background transitions are clean. Live-voice “Hey Pathu” was **not** detected in the 2026-09-28 session (neither unlocked nor locked; the WAV self-test still detects), so locked-screen wake detection is **not** yet verified. Details: `docs/CHANGELOG.md`.
+
+- Local module: `mobile/pathu/modules/pathu-wake-fgs` (`PathuWakeForegroundService`, `foregroundServiceType="microphone"`)
+- Ongoing notification: “Pathu is listening for Hey Pathu”
+- The FGS does **not** capture audio itself; the existing JS LiveAudioStream → sherpa-onnx pipeline stays the only mic consumer
+- Lifecycle: `sherpaWakeWord.start()` → FGS start; `sherpaWakeWord.stop()` (incl. STT handoff) → FGS stop
+- Background with FGS active: keep the running KWS instance; wake detections are recorded; STT starts only when the app is active
+- Android forbids starting a mic FGS from background, so the listener must be started while unlocked/foreground
+- Service states: `stopped`, `starting`, `listening`, `stopping`, `error`; JS observes via `wakeForegroundService.subscribe`
+- Permissions: `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_MICROPHONE`, `POST_NOTIFICATIONS` (runtime on API 33+), `WAKE_LOCK`
+- iQOO/OriginOS battery management may still kill background apps — not claimed reliable until physically verified
+- Not included: boot start (Phase 7B.2+)
 
 ## Routines / scenes (Phase 4)
 
@@ -94,7 +183,7 @@ WakeWordDetector (browser)
 - On Chromium, Web Speech may send microphone audio to the **browser vendor** for STT (not to Pathu LLM providers).
 - This is **not** a neural on-device wake model.
 
-**PorcupineWakeWordDetector** stub is reserved for a future fully local WASM engine. It requires a Picovoice AccessKey and a custom `Hey Pathu` Web WASM `.ppn` model from Picovoice Console — not bundled yet.
+**PorcupineWakeWordDetector** is a legacy, inactive browser stub (always refuses to start; covered by `test/voice.wake.test.ts`). Picovoice is **not** the planned wake engine: the mobile direction is a custom openWakeWord model (see Phase 7A). The stub is kept only to avoid changing the backend voice API in a docs/cleanup pass.
 
 ### Supported phrases
 

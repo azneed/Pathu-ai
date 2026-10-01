@@ -16,6 +16,11 @@ Phases:
 - **4** — persistent Routines/Scenes (named sequences of validated device actions)
 - **4.5** — hands-free wake word + push-to-talk on `/voice`
 - **5** — Pathu rebrand (assistant name + wake phrases)
+- **6** — Android Expo text chat client (`mobile/pathu` → `/chat`) · **COMPLETE**
+- **7A** — Local foreground wake-word experiment with sherpa-onnx KWS · **COMPLETE as an experiment**; the current GigaSpeech KWS model does not reliably recognize the user's own “Hey Pathu” (known-good WAV self-test passes)
+- **7** — Foreground voice conversation: wake → `expo-speech-recognition` → `POST /chat` → `expo-speech` TTS → wake again (one command per wake; STT may be on-device or system/remote) · **COMPLETE**
+- **7B.1** — Android microphone foreground service implemented; locked-screen wake remains **pending** because the current wake model is unsuitable for the user's voice
+- **Next (planned, not implemented)** — custom openWakeWord “Hey Pathu” model + native Android voice core
 
 ## Setup
 

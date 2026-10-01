@@ -1,0 +1,34 @@
+diff --git a/node_modules/react-native-live-audio-stream/android/src/main/java/com/imxiqi/rnliveaudiostream/RNLiveAudioStreamModule.java b/node_modules/react-native-live-audio-stream/android/src/main/java/com/imxiqi/rnliveaudiostream/RNLiveAudioStreamModule.java
+index 20f454f..212117c 100644
+--- a/node_modules/react-native-live-audio-stream/android/src/main/java/com/imxiqi/rnliveaudiostream/RNLiveAudioStreamModule.java
++++ b/node_modules/react-native-live-audio-stream/android/src/main/java/com/imxiqi/rnliveaudiostream/RNLiveAudioStreamModule.java
+@@ -96,7 +96,8 @@ public class RNLiveAudioStreamModule extends ReactContextBaseJavaModule {
+ 
+                         // skip first 2 buffers to eliminate "click sound"
+                         if (bytesRead > 0 && ++count > 2) {
+-                            base64Data = Base64.encodeToString(buffer, Base64.NO_WRAP);
++                            // Only encode the bytes actually read (avoid padding silence/stale data).
++                            base64Data = Base64.encodeToString(buffer, 0, bytesRead, Base64.NO_WRAP);
+                             eventEmitter.emit("data", base64Data);
+                         }
+                     }
+@@ -113,5 +114,19 @@ public class RNLiveAudioStreamModule extends ReactContextBaseJavaModule {
+     @ReactMethod
+     public void stop(Promise promise) {
+         isRecording = false;
++        if (promise != null) {
++            promise.resolve(null);
++        }
++    }
++
++    // Required by NativeEventEmitter on RN New Architecture.
++    @ReactMethod
++    public void addListener(String eventName) {
++        // no-op
++    }
++
++    @ReactMethod
++    public void removeListeners(Integer count) {
++        // no-op
+     }
+ }
