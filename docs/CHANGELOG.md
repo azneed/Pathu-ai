@@ -1,5 +1,16 @@
 # Changelog
 
+## Tooling — npm → pnpm workspace (2026-10-01)
+
+No application behavior or dependency versions changed.
+
+- Package manager pinned: `"packageManager": "pnpm@11.13.0"` (root `package.json`)
+- New `pnpm-workspace.yaml`: root backend + `mobile/pathu`; `nodeLinker: hoisted`, `hoistingLimits: workspaces` (same per-package `node_modules` layout as the previous npm installs, so Metro, Gradle `require.resolve` and `patch-package` resolve unchanged); `allowBuilds` permits only `esbuild` and `@siteed/sherpa-onnx.rn`
+- Single root `pnpm-lock.yaml` imported from the two npm lockfiles (`pnpm import`); `package-lock.json` and `mobile/pathu/package-lock.json` removed
+- npm-only `allowScripts` fields removed from both `package.json` files (replaced by `allowBuilds`)
+- `scripts/dev-android.ps1` starts Metro with `pnpm exec expo start` (JDK 17, ADB, reverse 8081/3001 unchanged)
+- Commands: `pnpm install`, `pnpm start`, `pnpm test`, `pnpm run typecheck`, `pnpm run dev:android`, `pnpm expo install <package>`
+
 ## Cleanup — pre-openWakeWord audit (2026-09-28)
 
 No production wake-word behavior changed. sherpa-onnx remains the baseline until replaced.

@@ -78,7 +78,7 @@ Write-Host "Will open Pathu with: $DeepLink"
 Write-Host ""
 
 try {
-  npx expo start --dev-client --port $MetroPort
+  pnpm exec expo start --dev-client --port $MetroPort
 } finally {
   Stop-Job $launchJob -ErrorAction SilentlyContinue
   Remove-Job $launchJob -Force -ErrorAction SilentlyContinue

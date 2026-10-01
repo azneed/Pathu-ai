@@ -1,0 +1,16 @@
+# The repository root (backend) is always part of the workspace.
+packages:
+  - mobile/pathu
+
+# React Native / Expo need a flat, symlink-free node_modules.
+nodeLinker: hoisted
+# Keep each package's dependencies in its own node_modules (same layout as the
+# previous per-package npm installs), so Metro, Gradle and patch-package resolve
+# mobile packages from mobile/pathu/node_modules.
+hoistingLimits: workspaces
+
+allowBuilds:
+  esbuild: true
+  '@siteed/sherpa-onnx.rn': true
+  '@google/genai': false
+  protobufjs: false

@@ -29,10 +29,21 @@ cp .env.example .env
 # set GEMINI_API_KEY (primary) and optionally OPENROUTER_API_KEY (fallback)
 # set YOUTUBE_API_KEY for YouTube search (server-side only)
 # set AUDIUS_API_KEY for Audius music search/stream (server-side only)
-npm install
+pnpm install
 ```
 
 Requires Node.js 22+ (uses built-in `node:sqlite`).
+
+### Package manager (pnpm workspace)
+
+The repo uses **pnpm**, pinned via `"packageManager": "pnpm@11.13.0"` in the root `package.json` (install once with `npm i -g pnpm@11.13.0`).
+
+- `pnpm-workspace.yaml` — workspace = repo root (backend) + `mobile/pathu`
+- `pnpm-lock.yaml` — single lockfile at the repo root (no `package-lock.json`)
+- `nodeLinker: hoisted` + `hoistingLimits: workspaces` — flat, symlink-free `node_modules` per package (root deps in `./node_modules`, mobile deps in `mobile/pathu/node_modules`), as React Native / Expo / Gradle expect
+- `allowBuilds` — only `esbuild` and `@siteed/sherpa-onnx.rn` (prebuilt native binaries) may run install scripts
+
+One `pnpm install` at the repo root installs both packages and applies the mobile `patch-package` patch.
 
 AI routing: `AI_PRIMARY` / `AI_FALLBACK` (default: `gemini` → `openrouter` with `openrouter/free`). Ollama remains selectable but is not required.
 
@@ -43,7 +54,7 @@ Timezone for clock-based schedules: `ANDRU_TIMEZONE` (IANA name, defaults to the
 ## Run
 
 ```bash
-npm start
+pnpm start
 ```
 
 Binds to `127.0.0.1:3001` by default.
@@ -160,8 +171,8 @@ curl -X POST http://127.0.0.1:3001/chat ^
 ## Tests
 
 ```bash
-npm test
-npm run typecheck
+pnpm test
+pnpm run typecheck
 ```
 
 ## Graphify

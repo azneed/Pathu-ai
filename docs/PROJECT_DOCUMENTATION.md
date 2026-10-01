@@ -55,8 +55,10 @@ Mobile UI
 From `mobile/pathu`:
 
 ```bash
-npm run dev:android
+pnpm run dev:android
 ```
+
+Dependencies are managed by the root pnpm workspace (`pnpm-workspace.yaml`: root backend + `mobile/pathu`, single root `pnpm-lock.yaml`, `nodeLinker: hoisted` with `hoistingLimits: workspaces`). Run `pnpm install` at the repo root; add Expo libraries from `mobile/pathu` with `pnpm expo install <package>`.
 
 Requires the Pathu backend already listening on **3001**. The helper sets JDK 17, verifies ADB, reverses **8081** (Metro) and **3001** (API), and opens the installed development build.
 
@@ -109,7 +111,7 @@ Flow:
 - Do **not** claim command STT is fully offline unless the device reports on-device recognition
 - Locked-screen / background / always-on wake is **Phase 7B**
 
-Native rebuild is required after adding speech modules. Day-to-day: `npm run dev:android`.
+Native rebuild is required after adding speech modules. Day-to-day: `pnpm run dev:android`.
 
 ## Phase 7B.1 — Android microphone foreground service / locked-screen wake baseline
 

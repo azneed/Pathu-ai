@@ -13,18 +13,39 @@ Mobile UI (src/app)
 
 The mobile app does **not** run its own LLM.
 
+## Dependencies (pnpm)
+
+This package is part of the repo's pnpm workspace (see the root `README.md`). Install from the **repo root**:
+
+```bash
+pnpm install
+```
+
+Add Expo / React Native libraries from `mobile/pathu` with Expo's installer so it picks SDK 57-compatible versions:
+
+```bash
+pnpm expo install <package>
+```
+
+Checks (from `mobile/pathu`):
+
+```bash
+pnpm exec tsc --noEmit
+pnpm dlx expo-doctor
+```
+
 ## USB Android development
 
 Prerequisites:
 
-1. Pathu backend running on the PC at port **3001** (`npm start` from the repo root).
+1. Pathu backend running on the PC at port **3001** (`pnpm start` from the repo root).
 2. Development APK already installed (`com.anonymous.pathu`).
 3. Phone connected over USB with debugging enabled.
 
 Start Metro + reverse both ports + open the app:
 
 ```bash
-npm run dev:android
+pnpm run dev:android
 ```
 
 This helper:
@@ -91,11 +112,11 @@ powershell -File scripts/fetch-kws-models.ps1
 Place/confirm models under `assets/wakeword/sherpa-kws-en/`. After adding native modules, rebuild once:
 
 ```bash
-npm run android
+pnpm run android
 ```
 
 Then day-to-day JS iteration:
 
 ```bash
-npm run dev:android
+pnpm run dev:android
 ```
