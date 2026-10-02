@@ -254,6 +254,53 @@ function addCalendarDays(
   };
 }
 
+export interface CurrentTimeInfo {
+  timeZone: string;
+  iso: string;
+  utcOffset: string;
+  localDate: string;
+  localTime: string;
+  localTime24: string;
+  dayOfWeek: string;
+}
+
+/** Runtime clock rendered in the application timezone (never model-guessed). */
+export function describeCurrentTime(now: Date, timeZone: string): CurrentTimeInfo {
+  const parts = getZonedParts(now, timeZone);
+  const asUtcMs = Date.UTC(
+    parts.year,
+    parts.month - 1,
+    parts.day,
+    parts.hour,
+    parts.minute,
+    parts.second,
+  );
+  const offsetMinutes = Math.round((asUtcMs - Math.floor(now.getTime() / 1000) * 1000) / 60_000);
+  const sign = offsetMinutes < 0 ? "-" : "+";
+  const abs = Math.abs(offsetMinutes);
+  const pad = (n: number) => String(n).padStart(2, "0");
+
+  return {
+    timeZone,
+    iso: now.toISOString(),
+    utcOffset: `${sign}${pad(Math.floor(abs / 60))}:${pad(abs % 60)}`,
+    localDate: new Intl.DateTimeFormat("en-US", {
+      timeZone,
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    }).format(now),
+    localTime: new Intl.DateTimeFormat("en-US", {
+      timeZone,
+      hour: "numeric",
+      minute: "2-digit",
+    }).format(now),
+    localTime24: `${pad(parts.hour)}:${pad(parts.minute)}`,
+    dayOfWeek: new Intl.DateTimeFormat("en-US", { timeZone, weekday: "long" }).format(now),
+  };
+}
+
 export function formatInstantForZone(date: Date, timeZone: string): string {
   return new Intl.DateTimeFormat("en-US", {
     timeZone,

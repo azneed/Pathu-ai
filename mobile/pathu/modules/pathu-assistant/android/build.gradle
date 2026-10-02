@@ -1,0 +1,26 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'com.anonymous.pathu'
+version = '1.0.0'
+
+android {
+  namespace "expo.modules.pathuassistant"
+  defaultConfig {
+    versionCode 1
+    versionName "1.0.0"
+  }
+  buildFeatures {
+    buildConfig true
+  }
+}
+
+dependencies {
+  // TFLite Interpreter runtime for the pre-trained openWakeWord models; independent of sherpa's onnxruntime.
+  // 1.4.x: Java Interpreter API; 2.x is built with a newer Kotlin than this Expo toolchain.
+  implementation "com.google.ai.edge.litert:litert:1.4.2"
+  // Native Audius playback for the assistant path (streams via the backend /music/stream redirect).
+  implementation "androidx.media3:media3-exoplayer:1.11.1"
+}

@@ -26,6 +26,7 @@ import {
 import type { DeviceGateway } from "../devices/types.js";
 import type { TaskService } from "../tasks/service.js";
 import {
+  describeCurrentTime,
   formatInstantForZone,
   nextOccurrence,
   parseDueAt,
@@ -90,6 +91,16 @@ const getTasksSchema = z
   .strict();
 
 export const toolDefinitions: ToolDefinition[] = [
+  {
+    name: "get_current_time",
+    description:
+      "Return the real current local date and time from the Pathu server clock in the application timezone. Use for 'what time is it', 'what's the date/day today', and before reasoning about relative times. Never guess the time.",
+    parameters: {
+      type: "object",
+      properties: {},
+      additionalProperties: false,
+    },
+  },
   {
     name: "get_devices",
     description:
@@ -378,6 +389,11 @@ export async function executeTool(
   }
 
   switch (name) {
+    case "get_current_time": {
+      z.object({}).strict().parse(args);
+      return describeCurrentTime((ctx.now ?? (() => new Date()))(), ctx.timeZone);
+    }
+
     case "get_devices":
       return ctx.gateway.getAll();
 

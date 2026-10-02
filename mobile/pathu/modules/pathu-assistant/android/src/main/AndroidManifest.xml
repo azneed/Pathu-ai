@@ -1,0 +1,48 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <uses-permission android:name="android.permission.RECORD_AUDIO" />
+  <uses-permission android:name="android.permission.INTERNET" />
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+  <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+  <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+  <application>
+    <service
+      android:name=".PathuAssistantForegroundService"
+      android:exported="false"
+      android:foregroundServiceType="microphone" />
+
+    <!-- Makes Pathu selectable as the Android default digital assistant. -->
+    <service
+      android:name=".PathuVoiceInteractionService"
+      android:exported="true"
+      android:label="Pathu"
+      android:permission="android.permission.BIND_VOICE_INTERACTION">
+      <meta-data
+        android:name="android.voice_interaction"
+        android:resource="@xml/pathu_voice_interaction_service" />
+      <intent-filter>
+        <action android:name="android.service.voice.VoiceInteractionService" />
+      </intent-filter>
+    </service>
+
+    <service
+      android:name=".PathuVoiceInteractionSessionService"
+      android:exported="true"
+      android:permission="android.permission.BIND_VOICE_INTERACTION" />
+
+    <!-- Required by the assistant role; forwards to the device's real recognizer. -->
+    <service
+      android:name=".PathuRecognitionService"
+      android:exported="true"
+      android:label="Pathu">
+      <intent-filter>
+        <action android:name="android.speech.RecognitionService" />
+        <category android:name="android.intent.category.DEFAULT" />
+      </intent-filter>
+      <meta-data
+        android:name="android.speech"
+        android:resource="@xml/pathu_recognition_service" />
+    </service>
+  </application>
+</manifest>

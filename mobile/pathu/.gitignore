@@ -37,6 +37,8 @@ yarn-error.*
 # large local KWS ONNX weights (regenerate via scripts/fetch-kws-models.ps1)
 # keep keywords.txt / tokens.txt / bpe.model tracked
 assets/wakeword/sherpa-kws-en/*.onnx
+# pre-trained openWakeWord weights (regenerate via scripts/fetch-wake-jarvis.ps1)
+modules/pathu-assistant/android/src/main/assets/openwakeword/*.tflite
 
 # typescript
 *.tsbuildinfo
