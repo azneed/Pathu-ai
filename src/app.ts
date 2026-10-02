@@ -6,6 +6,7 @@ import { Gateway } from "./devices/gateway.js";
 import { createRegistry } from "./devices/registry.js";
 import { SimulatedAdapter } from "./devices/simulated.js";
 import { createApp } from "./api/routes.js";
+import { assertAuthForHost } from "./api/auth.js";
 import { TaskScheduler } from "./tasks/scheduler.js";
 
 export function createRuntime(config: Config = loadConfig()) {
@@ -32,13 +33,16 @@ export function createRuntime(config: Config = loadConfig()) {
     timeZone: config.ANDRU_TIMEZONE,
     youtubeApiKey: config.YOUTUBE_API_KEY,
     audiusApiKey: config.AUDIUS_API_KEY,
+    apiSecret: config.PATHU_API_SECRET,
   });
 
   return { app, db, gateway, provider, config, scheduler };
 }
 
 export function startServer() {
-  const { app, config, scheduler, db } = createRuntime();
+  const config = loadConfig();
+  assertAuthForHost(config.HOST, config.PATHU_API_SECRET);
+  const { app, scheduler, db } = createRuntime(config);
   scheduler.start();
 
   const server = serve(
@@ -53,6 +57,9 @@ export function startServer() {
         `AI providers: primary=${config.AI_PRIMARY}, fallback=${config.AI_FALLBACK ?? "none"}`,
       );
       console.log(`Timezone: ${config.ANDRU_TIMEZONE}`);
+      console.log(
+        `API auth: ${config.PATHU_API_SECRET ? "required (Bearer)" : "disabled (loopback-only dev)"}`,
+      );
       console.log(
         `YouTube API: ${config.YOUTUBE_API_KEY ? "configured" : "not configured"}`,
       );

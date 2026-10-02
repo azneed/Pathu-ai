@@ -1,4 +1,4 @@
-import { getApiBaseUrl } from "./config";
+import { getApiBaseUrl, getApiSecret } from "./config";
 import {
   PathuApiError,
   type ApiErrorBody,
@@ -23,14 +23,15 @@ async function fetchJson<T>(
   const controller = new AbortController();
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const headers: Record<string, string> = { Accept: "application/json" };
+  if (options.body !== undefined) headers["Content-Type"] = "application/json";
+  const secret = getApiSecret();
+  if (secret) headers.Authorization = `Bearer ${secret}`;
 
   try {
     const response = await fetch(url, {
       method: options.method ?? "GET",
-      headers:
-        options.body !== undefined
-          ? { "Content-Type": "application/json", Accept: "application/json" }
-          : { Accept: "application/json" },
+      headers,
       body:
         options.body !== undefined ? JSON.stringify(options.body) : undefined,
       signal: controller.signal,

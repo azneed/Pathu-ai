@@ -6,11 +6,23 @@ plugins {
 group = 'com.anonymous.pathu'
 version = '1.0.0'
 
+// Backend Bearer secret for the native /chat client: PATHU_API_SECRET from the build environment,
+// else EXPO_PUBLIC_PATHU_API_SECRET from mobile/pathu/.env (same value the RN client uses).
+def pathuApiSecret = {
+  def fromEnv = System.getenv("PATHU_API_SECRET")?.trim()
+  if (fromEnv) return fromEnv
+  def envFile = new File(projectDir, "../../../.env")
+  if (!envFile.exists()) return ""
+  def line = envFile.readLines().find { it.trim().startsWith("EXPO_PUBLIC_PATHU_API_SECRET=") }
+  return line ? line.substring(line.indexOf('=') + 1).trim() : ""
+}()
+
 android {
   namespace "expo.modules.pathuassistant"
   defaultConfig {
     versionCode 1
     versionName "1.0.0"
+    buildConfigField "String", "PATHU_API_SECRET", "\"${pathuApiSecret.replace('\\', '\\\\').replace('"', '\\"')}\""
   }
   buildFeatures {
     buildConfig true

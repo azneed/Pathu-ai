@@ -1,0 +1,36 @@
+# Render Blueprint for the Pathu backend (HTTPS is terminated by Render).
+# Secrets use `sync: false` and are entered in the Render dashboard; never commit their values.
+services:
+  - type: web
+    name: pathu-backend
+    runtime: node
+    plan: free
+    # Backend-only install: --ignore-workspace skips the Expo app in mobile/pathu (and its native
+    # postinstall downloads); --prod=false keeps tsx, which runs src/ at start.
+    buildCommand: npx --yes pnpm@11.13.0 install --frozen-lockfile --ignore-workspace --prod=false --config.strict-dep-builds=false
+    startCommand: node --experimental-sqlite --import tsx src/main.ts
+    healthCheckPath: /health
+    envVars:
+      - key: HOST
+        value: 0.0.0.0
+      - key: ANDRU_TIMEZONE
+        value: Asia/Dubai
+      - key: AI_PRIMARY
+        value: gemini
+      - key: AI_FALLBACK
+        value: openrouter
+      # Bearer secret required on every API route except /health (server refuses to start without it).
+      - key: PATHU_API_SECRET
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: YOUTUBE_API_KEY
+        sync: false
+      - key: AUDIUS_API_KEY
+        sync: false
+      # SQLite lives on the instance filesystem, which is ephemeral on Render unless a persistent
+      # disk is attached (paid plans), e.g. mount at /var/data and set DATABASE_PATH=/var/data/andru.db.
+      - key: DATABASE_PATH
+        value: ./data/andru.db

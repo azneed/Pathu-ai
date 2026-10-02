@@ -13,6 +13,7 @@ import { audiusTrackIdSchema } from "../music/clientActions.js";
 import { resetMusicSession } from "../music/session.js";
 import { DEVICE_ACTION_TOOLS } from "../tasks/types.js";
 import { resetYoutubeSession } from "../youtube/session.js";
+import { apiAuth } from "./auth.js";
 
 const chatBodySchema = z.object({
   message: z.string().trim().min(1, "message is required"),
@@ -65,10 +66,13 @@ export interface AppDeps {
   timeZone?: string;
   youtubeApiKey?: string;
   audiusApiKey?: string;
+  /** Bearer secret required on all non-public routes; empty/undefined disables auth. */
+  apiSecret?: string;
 }
 
 export function createApp(deps: AppDeps): Hono {
   const app = new Hono();
+  app.use("*", apiAuth(deps.apiSecret ?? ""));
   const timeZone =
     deps.timeZone ??
     Intl.DateTimeFormat().resolvedOptions().timeZone ??

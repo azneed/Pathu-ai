@@ -65,6 +65,16 @@ const envSchema = z.object({
     .transform((value) => value.trim()),
 
   /**
+   * Shared secret clients send as `Authorization: Bearer <secret>`.
+   * Empty = auth disabled, which is only allowed on a loopback HOST.
+   */
+  PATHU_API_SECRET: z
+    .string()
+    .optional()
+    .default("")
+    .transform((value) => value.trim()),
+
+  /**
    * Seconds to skip a provider after HTTP 429 / quota / rate-limit errors.
    * Default 300 (5 minutes). In-memory only; clears on success or expiry.
    */

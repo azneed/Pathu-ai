@@ -38,6 +38,9 @@ object PathuChatClient {
       connection.doOutput = true
       connection.setRequestProperty("Content-Type", "application/json")
       connection.setRequestProperty("Accept", "application/json")
+      if (BuildConfig.PATHU_API_SECRET.isNotEmpty()) {
+        connection.setRequestProperty("Authorization", "Bearer ${BuildConfig.PATHU_API_SECRET}")
+      }
       connection.outputStream.use { it.write(JSONObject().put("message", message).toString().toByteArray()) }
 
       val status = connection.responseCode
