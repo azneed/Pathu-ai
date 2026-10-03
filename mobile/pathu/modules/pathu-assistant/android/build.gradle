@@ -6,23 +6,29 @@ plugins {
 group = 'com.anonymous.pathu'
 version = '1.0.0'
 
-// Backend Bearer secret for the native /chat client: PATHU_API_SECRET from the build environment,
-// else EXPO_PUBLIC_PATHU_API_SECRET from mobile/pathu/.env (same value the RN client uses).
-def pathuApiSecret = {
-  def fromEnv = System.getenv("PATHU_API_SECRET")?.trim()
+// Native backend config, same values the RN client uses: the build environment variable wins,
+// else the EXPO_PUBLIC_* key from mobile/pathu/.env (last occurrence, like dotenv), else the fallback.
+def pathuEnv = { String buildEnvKey, String dotenvKey, String fallback ->
+  def fromEnv = System.getenv(buildEnvKey)?.trim()
   if (fromEnv) return fromEnv
   def envFile = new File(projectDir, "../../../.env")
-  if (!envFile.exists()) return ""
-  def line = envFile.readLines().find { it.trim().startsWith("EXPO_PUBLIC_PATHU_API_SECRET=") }
-  return line ? line.substring(line.indexOf('=') + 1).trim() : ""
-}()
+  if (!envFile.exists()) return fallback
+  def line = envFile.readLines().findAll { it.trim().startsWith("${dotenvKey}=") }.with { it ? it.last() : null }
+  def value = line ? line.substring(line.indexOf('=') + 1).trim() : ""
+  return value ?: fallback
+}
+def buildConfigString = { String value -> "\"${value.replace('\\', '\\\\').replace('"', '\\"')}\"" }
+// Loopback fallback = USB dev via `adb reverse tcp:3001 tcp:3001`.
+def pathuApiBaseUrl = pathuEnv("PATHU_API_BASE_URL", "EXPO_PUBLIC_API_BASE_URL", "http://127.0.0.1:3001")
+def pathuApiSecret = pathuEnv("PATHU_API_SECRET", "EXPO_PUBLIC_PATHU_API_SECRET", "")
 
 android {
   namespace "expo.modules.pathuassistant"
   defaultConfig {
     versionCode 1
     versionName "1.0.0"
-    buildConfigField "String", "PATHU_API_SECRET", "\"${pathuApiSecret.replace('\\', '\\\\').replace('"', '\\"')}\""
+    buildConfigField "String", "PATHU_API_BASE_URL", buildConfigString(pathuApiBaseUrl)
+    buildConfigField "String", "PATHU_API_SECRET", buildConfigString(pathuApiSecret)
   }
   buildFeatures {
     buildConfig true

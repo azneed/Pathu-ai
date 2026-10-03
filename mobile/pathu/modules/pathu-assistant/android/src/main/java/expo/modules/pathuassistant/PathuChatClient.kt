@@ -22,8 +22,8 @@ data class ChatReply(val reply: String, val music: List<MusicAction>)
  * (request `{ message }`, response `{ reply, clientActions?, ... }`), same as mobile/pathu/src/api/client.ts.
  */
 object PathuChatClient {
-  // Matches getApiBaseUrl() default: USB dev via `adb reverse tcp:3001 tcp:3001`.
-  const val BASE_URL = "http://127.0.0.1:3001"
+  // Same source as getApiBaseUrl(): EXPO_PUBLIC_API_BASE_URL, baked in by build.gradle.
+  val BASE_URL: String = BuildConfig.PATHU_API_BASE_URL.trimEnd('/')
   private const val TIMEOUT_MS = 60_000
   private val TRACK_ID = Regex("^[a-zA-Z0-9]{4,64}$")
   private val MUSIC_ACTIONS = setOf("play", "pause", "resume", "stop", "next", "previous", "set_volume")
