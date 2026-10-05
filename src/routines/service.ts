@@ -30,7 +30,7 @@ export interface RoutineService {
    * Execute actions in order via DeviceGateway.
    * Stops on the first failure (unlike TaskService.execute).
    */
-  execute(id: string, gateway: DeviceGateway): RoutineExecutionResult;
+  execute(id: string, gateway: DeviceGateway): Promise<RoutineExecutionResult>;
 }
 
 export function createRoutineService(options: {
@@ -102,7 +102,7 @@ export function createRoutineService(options: {
       return current;
     },
 
-    execute(id, gateway) {
+    async execute(id, gateway) {
       const routine = getRoutineWithStatements(options.stmts, id);
       if (!routine) {
         throw new Error(`Routine not found: ${id}`);
@@ -127,7 +127,7 @@ export function createRoutineService(options: {
       for (let i = 0; i < routine.actions.length; i += 1) {
         const action = routine.actions[i]!;
         try {
-          const result = executeDeviceAction(
+          const result = await executeDeviceAction(
             action.tool,
             action.arguments,
             gateway,

@@ -43,8 +43,8 @@ export type RgbCommand = Partial<RgbState>;
 export type DeviceCommand = AcCommand | FanCommand | LightsCommand | RgbCommand;
 
 export interface DeviceAdapter {
-  get(id: DeviceId): DeviceState;
-  set(id: DeviceId, command: DeviceCommand): DeviceState;
+  get(id: DeviceId): Promise<DeviceState>;
+  set(id: DeviceId, command: DeviceCommand): Promise<DeviceState>;
 }
 
 export interface DeviceRecord {
@@ -54,9 +54,9 @@ export interface DeviceRecord {
 }
 
 export interface DeviceGateway {
-  get(id: DeviceId): DeviceState;
-  set(id: DeviceId, command: DeviceCommand): DeviceState;
-  getAll(): Record<DeviceId, DeviceState>;
+  get(id: DeviceId): Promise<DeviceState>;
+  set(id: DeviceId, command: DeviceCommand): Promise<DeviceState>;
+  getAll(): Promise<Record<DeviceId, DeviceState>>;
 }
 
 export const DEFAULT_STATES: Record<DeviceId, DeviceState> = {

@@ -38,7 +38,7 @@ describe("chat → create_task (voice/API path)", () => {
   it("creates a delayed task via /chat tool loop without executing devices yet", async () => {
     const stack = createStack();
     db = stack.db;
-    stack.gateway.set("bedroom.ac", { power: "on", temperature: 22 });
+    await stack.gateway.set("bedroom.ac", { power: "on", temperature: 22 });
 
     const now = new Date("2026-09-19T12:00:00.000Z");
     const provider = new ScriptedProvider([
@@ -79,14 +79,14 @@ describe("chat → create_task (voice/API path)", () => {
 
     expect(result.reply).toMatch(/5 minutes/i);
     expect(result.toolTrace[0]?.name).toBe("create_task");
-    expect(stack.gateway.get("bedroom.ac")).toMatchObject({ power: "on" });
+    expect(await stack.gateway.get("bedroom.ac")).toMatchObject({ power: "on" });
     expect(stack.db.tasks.list({ status: "pending" })).toHaveLength(1);
   });
 
   it("executes a stored task without calling the LLM", async () => {
     const stack = createStack();
     db = stack.db;
-    stack.gateway.set("bedroom.ac", { power: "on" });
+    await stack.gateway.set("bedroom.ac", { power: "on" });
 
     const task = stack.db.tasks.create({
       type: "delayed",
@@ -97,9 +97,9 @@ describe("chat → create_task (voice/API path)", () => {
     });
 
     // Simulate Gemini outage: no provider involved
-    const executed = stack.db.tasks.execute(task.id, stack.gateway);
+    const executed = await stack.db.tasks.execute(task.id, stack.gateway);
     expect(executed.status).toBe("completed");
-    expect(stack.gateway.get("bedroom.ac")).toMatchObject({ power: "off" });
+    expect(await stack.gateway.get("bedroom.ac")).toMatchObject({ power: "off" });
   });
 
   it("exposes pending tasks on GET /tasks for voice/debug clients", async () => {

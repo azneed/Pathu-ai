@@ -97,8 +97,8 @@ export function createApp(deps: AppDeps): Hono {
     });
   });
 
-  app.get("/devices", (c) => {
-    return c.json({ devices: deps.gateway.getAll() });
+  app.get("/devices", async (c) => {
+    return c.json({ devices: await deps.gateway.getAll() });
   });
 
   app.get("/tasks", (c) => {
@@ -189,9 +189,9 @@ export function createApp(deps: AppDeps): Hono {
     }
   });
 
-  app.post("/routines/:id/run", (c) => {
+  app.post("/routines/:id/run", async (c) => {
     try {
-      const execution = deps.db.routines.execute(
+      const execution = await deps.db.routines.execute(
         c.req.param("id"),
         deps.gateway,
       );
@@ -206,7 +206,7 @@ export function createApp(deps: AppDeps): Hono {
         error: execution.error,
         routine: execution.routine,
         results: execution.results,
-        devices: deps.gateway.getAll(),
+        devices: await deps.gateway.getAll(),
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);

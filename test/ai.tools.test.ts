@@ -34,7 +34,7 @@ describe("tools", () => {
     );
 
     expect(result).toMatchObject({ power: "on", temperature: 23 });
-    expect(created.gateway.get("bedroom.ac")).toMatchObject({
+    expect(await created.gateway.get("bedroom.ac")).toMatchObject({
       power: "on",
       temperature: 23,
     });

@@ -149,7 +149,7 @@ export class SimulatedAdapter implements DeviceAdapter {
     }
   }
 
-  get(id: DeviceId): DeviceState {
+  async get(id: DeviceId): Promise<DeviceState> {
     const state = this.states.get(id);
     if (!state) {
       throw new Error(`Unknown device: ${id}`);
@@ -157,7 +157,7 @@ export class SimulatedAdapter implements DeviceAdapter {
     return structuredClone(state);
   }
 
-  set(id: DeviceId, command: DeviceCommand): DeviceState {
+  async set(id: DeviceId, command: DeviceCommand): Promise<DeviceState> {
     const current = this.states.get(id);
     if (!current) {
       throw new Error(`Unknown device: ${id}`);

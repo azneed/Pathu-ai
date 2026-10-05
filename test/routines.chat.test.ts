@@ -79,9 +79,9 @@ describe("chat → routines", () => {
     expect(result.toolTrace[0]?.name).toBe("create_routine");
     expect(result.reply).toMatch(/sleeping/i);
     expect(stack.db.routines.list()).toHaveLength(1);
-    expect(stack.gateway.get("bedroom.lights")).toMatchObject({ power: "off" });
+    expect(await stack.gateway.get("bedroom.lights")).toMatchObject({ power: "off" });
     // default lights are already off — ensure AC was not turned on by create
-    expect(stack.gateway.get("bedroom.ac")).toMatchObject({ power: "off" });
+    expect(await stack.gateway.get("bedroom.ac")).toMatchObject({ power: "off" });
   });
 
   it("runs a stored routine through chat tools", async () => {
@@ -128,11 +128,11 @@ describe("chat → routines", () => {
 
     expect(result.toolTrace[0]?.name).toBe("run_routine");
     expect(result.toolTrace[0]?.result).toMatchObject({ ok: true });
-    expect(stack.gateway.get("bedroom.ac")).toMatchObject({
+    expect(await stack.gateway.get("bedroom.ac")).toMatchObject({
       power: "on",
       temperature: 24,
     });
-    expect(stack.gateway.get("bedroom.fan")).toMatchObject({
+    expect(await stack.gateway.get("bedroom.fan")).toMatchObject({
       power: "on",
       speed: 2,
     });

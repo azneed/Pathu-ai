@@ -11,7 +11,7 @@ export class Gateway implements DeviceGateway {
     return record;
   }
 
-  get(id: DeviceId): DeviceState {
+  async get(id: DeviceId): Promise<DeviceState> {
     if (!isDeviceId(id)) {
       throw new Error(`Unknown device id: ${id}`);
     }
@@ -19,7 +19,7 @@ export class Gateway implements DeviceGateway {
     return record.adapter.get(id);
   }
 
-  set(id: DeviceId, command: DeviceCommand): DeviceState {
+  async set(id: DeviceId, command: DeviceCommand): Promise<DeviceState> {
     if (!isDeviceId(id)) {
       throw new Error(`Unknown device id: ${id}`);
     }
@@ -27,10 +27,10 @@ export class Gateway implements DeviceGateway {
     return record.adapter.set(id, command);
   }
 
-  getAll(): Record<DeviceId, DeviceState> {
+  async getAll(): Promise<Record<DeviceId, DeviceState>> {
     const result = {} as Record<DeviceId, DeviceState>;
     for (const [id, record] of this.registry) {
-      result[id] = record.adapter.get(id);
+      result[id] = await record.adapter.get(id);
     }
     return result;
   }

@@ -70,7 +70,7 @@ describe("routines security and tools", () => {
 
     expect(created.ok).toBe(true);
     expect(created.routine.name).toBe("bedtime");
-    expect(stack.gateway.get("bedroom.ac")).toMatchObject({ power: "off" });
+    expect(await stack.gateway.get("bedroom.ac")).toMatchObject({ power: "off" });
 
     const listed = (await executeTool(
       "list_routines",
@@ -186,20 +186,20 @@ describe("routines security and tools", () => {
 
     expect(run.ok).toBe(true);
     expect(run.results).toHaveLength(4);
-    expect(stack.gateway.get("bedroom.ac")).toMatchObject({
+    expect(await stack.gateway.get("bedroom.ac")).toMatchObject({
       power: "on",
       temperature: 23,
       mode: "cool",
     });
-    expect(stack.gateway.get("bedroom.fan")).toMatchObject({
+    expect(await stack.gateway.get("bedroom.fan")).toMatchObject({
       power: "on",
       speed: 1,
     });
-    expect(stack.gateway.get("bedroom.lights")).toMatchObject({
+    expect(await stack.gateway.get("bedroom.lights")).toMatchObject({
       power: "on",
       brightness: 20,
     });
-    expect(stack.gateway.get("bedroom.rgb")).toMatchObject({
+    expect(await stack.gateway.get("bedroom.rgb")).toMatchObject({
       power: "on",
       brightness: 15,
       color: { r: 20, g: 0, b: 40 },
@@ -220,13 +220,13 @@ describe("routines security and tools", () => {
     });
 
     const failingGateway: DeviceGateway = {
-      get(id) {
+      async get(id) {
         return stack.gateway.get(id);
       },
-      getAll() {
+      async getAll() {
         return stack.gateway.getAll();
       },
-      set(id, command) {
+      async set(id, command) {
         if (id === "bedroom.fan") {
           throw new Error("fan adapter unavailable");
         }
@@ -234,7 +234,7 @@ describe("routines security and tools", () => {
       },
     };
 
-    const execution = stack.db.routines.execute(routine.id, failingGateway);
+    const execution = await stack.db.routines.execute(routine.id, failingGateway);
     expect(execution.success).toBe(false);
     expect(execution.ok).toBe(false);
     expect(execution.completedActions).toBe(1);
@@ -245,12 +245,12 @@ describe("routines security and tools", () => {
     expect(execution.results).toHaveLength(2);
     expect(execution.results[0]?.ok).toBe(true);
     expect(execution.results[1]?.ok).toBe(false);
-    expect(stack.gateway.get("bedroom.lights")).toMatchObject({
+    expect(await stack.gateway.get("bedroom.lights")).toMatchObject({
       power: "on",
       brightness: 50,
     });
-    expect(stack.gateway.get("bedroom.fan")).toMatchObject({ power: "off" });
-    expect(stack.gateway.get("bedroom.ac")).toMatchObject({ power: "off" });
+    expect(await stack.gateway.get("bedroom.fan")).toMatchObject({ power: "off" });
+    expect(await stack.gateway.get("bedroom.ac")).toMatchObject({ power: "off" });
   });
 
   it("rejects empty action lists on create; empty execute is a truthful no-op", async () => {
@@ -268,13 +268,11 @@ describe("routines security and tools", () => {
       name: "solo",
       actions: [{ tool: "set_lights", arguments: { power: "on", brightness: 40 } }],
     });
-    // Simulate empty by updating store bypass is not allowed — create forbids empty.
-    // One-action success shape:
-    const run = stack.db.routines.execute(one.id, stack.gateway);
+    const run = await stack.db.routines.execute(one.id, stack.gateway);
     expect(run.success).toBe(true);
     expect(run.completedActions).toBe(1);
     expect(run.routineName).toBe("solo");
-    expect(stack.gateway.get("bedroom.lights")).toMatchObject({
+    expect(await stack.gateway.get("bedroom.lights")).toMatchObject({
       power: "on",
       brightness: 40,
     });

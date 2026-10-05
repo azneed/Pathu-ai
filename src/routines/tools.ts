@@ -304,7 +304,7 @@ export async function executeRoutineTool(
         return resolved;
       }
 
-      const execution = ctx.routines.execute(resolved.routine.id, ctx.gateway);
+      const execution = await ctx.routines.execute(resolved.routine.id, ctx.gateway);
       return {
         success: execution.success,
         ok: execution.ok,

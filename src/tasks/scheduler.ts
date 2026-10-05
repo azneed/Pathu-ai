@@ -63,7 +63,7 @@ export class TaskScheduler {
         // Re-check: may have been canceled while earlier tasks ran.
         const current = this.options.tasks.get(task.id);
         if (!current || current.status !== "pending") continue;
-        this.options.tasks.execute(task.id, this.options.gateway);
+        await this.options.tasks.execute(task.id, this.options.gateway);
         this.options.onExecuted?.(task.id);
       }
     } finally {

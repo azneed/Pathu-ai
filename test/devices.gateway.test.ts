@@ -22,10 +22,10 @@ describe("DeviceGateway", () => {
     db?.close();
   });
 
-  it("resolves all four bedroom devices", () => {
+  it("resolves all four bedroom devices", async () => {
     const created = createGateway();
     db = created.db;
-    const all = created.gateway.getAll();
+    const all = await created.gateway.getAll();
 
     expect(Object.keys(all).sort()).toEqual([
       "bedroom.ac",
@@ -35,23 +35,23 @@ describe("DeviceGateway", () => {
     ]);
   });
 
-  it("applies commands through the gateway", () => {
+  it("applies commands through the gateway", async () => {
     const created = createGateway();
     db = created.db;
 
-    created.gateway.set("bedroom.ac", { power: "on", temperature: 23 });
-    expect(created.gateway.get("bedroom.ac")).toMatchObject({
+    await created.gateway.set("bedroom.ac", { power: "on", temperature: 23 });
+    expect(await created.gateway.get("bedroom.ac")).toMatchObject({
       power: "on",
       temperature: 23,
     });
   });
 
-  it("rejects unknown device ids", () => {
+  it("rejects unknown device ids", async () => {
     const created = createGateway();
     db = created.db;
 
-    expect(() =>
+    await expect(
       created.gateway.get("kitchen.ac" as never),
-    ).toThrow(/Unknown device/);
+    ).rejects.toThrow(/Unknown device/);
   });
 });

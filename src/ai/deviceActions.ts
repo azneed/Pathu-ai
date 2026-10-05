@@ -58,11 +58,11 @@ export const setRgbSchema = z
   );
 
 /** Validate + execute a device-control tool through DeviceGateway (no LLM). */
-export function executeDeviceAction(
+export async function executeDeviceAction(
   name: string,
   args: Record<string, unknown>,
   gateway: DeviceGateway,
-): unknown {
+): Promise<unknown> {
   switch (name) {
     case "set_ac": {
       const command = setAcSchema.parse(args);

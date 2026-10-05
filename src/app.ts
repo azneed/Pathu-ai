@@ -4,7 +4,7 @@ import { loadConfig, type Config } from "./config.js";
 import { openDb } from "./db/index.js";
 import { Gateway } from "./devices/gateway.js";
 import { createRegistry } from "./devices/registry.js";
-import { SimulatedAdapter } from "./devices/simulated.js";
+import { createDeviceAdapter } from "./devices/createDeviceAdapter.js";
 import { createApp } from "./api/routes.js";
 import { assertAuthForHost } from "./api/auth.js";
 import { TaskScheduler } from "./tasks/scheduler.js";
@@ -16,7 +16,7 @@ export function createRuntime(config: Config = loadConfig()) {
     timeZone: config.ANDRU_TIMEZONE,
     onTasksChanged: () => scheduler?.notify(),
   });
-  const adapter = new SimulatedAdapter(db);
+  const adapter = createDeviceAdapter({ config, db });
   const registry = createRegistry(adapter);
   const gateway = new Gateway(registry);
   const provider = createLLMProvider(config);

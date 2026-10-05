@@ -28,7 +28,7 @@ export interface TaskService {
   listPendingDue(beforeIso: string): TaskRecord[];
   getNextPending(): TaskRecord | null;
   /** Execute a single pending task via DeviceGateway (no LLM). */
-  execute(taskId: string, gateway: DeviceGateway): TaskRecord;
+  execute(taskId: string, gateway: DeviceGateway): Promise<TaskRecord>;
 }
 
 export function createTaskService(options: {
@@ -83,7 +83,7 @@ export function createTaskService(options: {
       return getNextPendingWithStatements(options.stmts);
     },
 
-    execute(taskId, gateway) {
+    async execute(taskId, gateway) {
       const task = getTaskWithStatements(options.stmts, taskId);
       if (!task) {
         throw new Error(`Task not found: ${taskId}`);
@@ -102,7 +102,7 @@ export function createTaskService(options: {
 
       for (const action of task.actions) {
         try {
-          const result = executeDeviceAction(
+          const result = await executeDeviceAction(
             action.tool,
             action.arguments,
             gateway,

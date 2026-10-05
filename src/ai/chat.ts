@@ -34,18 +34,18 @@ function extractClientAction(result: unknown): ClientAction | null {
   return parseClientAction(maybe);
 }
 
-function buildProviderMessages(options: {
+async function buildProviderMessages(options: {
   gateway: DeviceGateway;
   history: ChatMessage[];
   userMessage: ChatMessage;
   inTurn: ChatMessage[];
   timeZone: string;
-}): ChatMessage[] {
+}): Promise<ChatMessage[]> {
   return [
     { role: "system", content: buildSystemPrompt(options.timeZone) },
     {
       role: "system",
-      content: formatDeviceStateContext(options.gateway.getAll()),
+      content: formatDeviceStateContext(await options.gateway.getAll()),
     },
     ...selectRecentHistory(options.history),
     options.userMessage,
@@ -97,10 +97,10 @@ export async function runChat(options: {
     audiusApiKey: options.audiusApiKey ?? "",
   };
 
-  const finish = (reply: string): ChatResult => {
+  const finish = async (reply: string): Promise<ChatResult> => {
     const result: ChatResult = {
       reply,
-      devices: options.gateway.getAll(),
+      devices: await options.gateway.getAll(),
       toolTrace,
       provider: lastProvider,
       model: lastModel,
@@ -115,7 +115,7 @@ export async function runChat(options: {
   while (rounds < MAX_TOOL_ROUNDS) {
     rounds += 1;
 
-    const providerMessages = buildProviderMessages({
+    const providerMessages = await buildProviderMessages({
       gateway: options.gateway,
       history,
       userMessage,
@@ -143,7 +143,7 @@ export async function runChat(options: {
 
     const toolCalls = assistantMessage.toolCalls ?? [];
     if (toolCalls.length === 0) {
-      return finish(assistantMessage.content?.trim() || "Done.");
+      return await finish(assistantMessage.content?.trim() || "Done.");
     }
 
     for (const call of toolCalls) {
@@ -186,7 +186,7 @@ export async function runChat(options: {
     }
   }
 
-  return finish(
+  return await finish(
     "I had trouble completing that request after several tool steps.",
   );
 }

@@ -84,6 +84,19 @@ const envSchema = z.object({
     .min(0)
     .max(86_400)
     .default(300),
+
+  /** Home Assistant REST API base URL (e.g. http://localhost:8123) */
+  HOMEASSISTANT_BASE_URL: z
+    .string()
+    .default("http://localhost:8123")
+    .transform((value) => value.trim()),
+
+  /** Home Assistant Long-Lived Access Token. Empty = fall back to SimulatedAdapter */
+  HOMEASSISTANT_TOKEN: z
+    .string()
+    .optional()
+    .default("")
+    .transform((value) => value.trim()),
 });
 
 export type Config = z.infer<typeof envSchema>;
