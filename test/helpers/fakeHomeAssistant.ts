@@ -75,6 +75,11 @@ export function defaultEntities(): FakeEntity[] {
       state: "off",
       attributes: { brightness: null, rgb_color: null, supported_color_modes: ["rgb"] },
     },
+    {
+      entity_id: "remote.pathu",
+      state: "on",
+      attributes: { friendly_name: "PATHU", supported_features: 3 },
+    },
     { entity_id: "sensor.unrelated", state: "12", attributes: {} },
   ];
 }
@@ -146,6 +151,8 @@ function applyService(
       entity.state = "off";
       attrs.brightness = null;
       if ("rgb_color" in attrs) attrs.rgb_color = null;
+      return null;
+    case "remote.send_command":
       return null;
     default:
       return `Service ${domain}.${service} not found`;

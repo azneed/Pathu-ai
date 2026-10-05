@@ -19,7 +19,7 @@ import { HomeAssistantAdapter } from "../src/devices/homeassistant/adapter.js";
 import { DeviceCommandError, DeviceUnavailableError } from "../src/devices/errors.js";
 import { Gateway } from "../src/devices/gateway.js";
 import { createRegistry } from "../src/devices/registry.js";
-import { DEVICE_IDS, type DeviceId } from "../src/devices/types.js";
+import { DEVICE_IDS, type AcState, type DeviceId } from "../src/devices/types.js";
 import {
   startFakeHomeAssistant,
   unusedLocalUrl,
@@ -31,6 +31,7 @@ const ENTITY_IDS = [
   "fan.bedroom_fan",
   "light.bedroom_lights",
   "light.bedroom_rgb",
+  "remote.pathu",
 ];
 
 /** A message that may reach the LLM must not reveal HA internals. */
@@ -514,6 +515,31 @@ describe("HomeAssistantAdapter against a fake Home Assistant", () => {
 
     expect(error.message).toBe("bedroom.lights: Home Assistant is unreachable");
     expectSafeMessage(error.message, [url]);
+  });
+
+  it("sends remote.send_command for hall.ac power operations", async () => {
+    ha = await startFakeHomeAssistant();
+    const adapter = adapterFor(ha);
+
+    const result = (await adapter.set("hall.ac", { power: "on" })) as AcState;
+
+    expect(result.powerStateUnconfirmed).toBe(true);
+    const sendCalls = ha.requests.filter((r) => r.path === "/api/services/remote/send_command");
+    expect(sendCalls).toHaveLength(1);
+    expect(sendCalls[0]?.body).toEqual({
+      entity_id: "remote.pathu",
+      device: "Air conditioner - Hall",
+      command: "power",
+    });
+  });
+
+  it("rejects unsupported hall.ac operations (temperature/mode/fanSpeed)", async () => {
+    ha = await startFakeHomeAssistant();
+    const adapter = adapterFor(ha);
+
+    await expect(adapter.set("hall.ac", { temperature: 22 })).rejects.toThrow(DeviceCommandError);
+    await expect(adapter.set("hall.ac", { mode: "cool" })).rejects.toThrow(DeviceCommandError);
+    await expect(adapter.set("hall.ac", { fanSpeed: 3 })).rejects.toThrow(DeviceCommandError);
   });
 });
 

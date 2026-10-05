@@ -22,6 +22,7 @@ const KIND_BY_ID: Record<DeviceId, DeviceKind> = {
   "bedroom.fan": "fan",
   "bedroom.lights": "lights",
   "bedroom.rgb": "rgb",
+  "hall.ac": "ac",
 };
 
 function clamp(value: number, min: number, max: number): number {

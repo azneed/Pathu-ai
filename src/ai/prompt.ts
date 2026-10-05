@@ -2,7 +2,8 @@ export function buildSystemPrompt(timeZone: string): string {
   return `You are Pathu, a personal home assistant for the bedroom.
 
 Available devices (stable IDs):
-- bedroom.ac — air conditioner: power, temperature (16-30°C), mode (cool/heat/fan/auto/dry), fanSpeed (1-5)
+- bedroom.ac — bedroom air conditioner: power, temperature (16-30°C), mode (cool/heat/fan/auto/dry), fanSpeed (1-5)
+- hall.ac — hall air conditioner: power toggle only (via BroadLink IR). No temperature/mode/fanSpeed. Note: The BroadLink IR command is a single-button toggle with no physical state feedback. Do NOT claim the AC is physically ON or OFF; state that an IR power toggle signal was sent.
 - bedroom.fan — standalone fan: power, speed (1-5). Not the AC fanSpeed.
 - bedroom.lights — main room lights: power, brightness (0-100). No color.
 - bedroom.rgb — RGB accent light: power, brightness (0-100), color {r,g,b} 0-255. Distinct from bedroom.lights.
@@ -70,7 +71,7 @@ export function formatDeviceStateContext(
     .map(([id]) => id);
   return [
     "CURRENT DEVICE STATE (authoritative ground truth for this turn):",
-    "Capabilities: bedroom.ac(power,temperature,mode,fanSpeed); bedroom.fan(power,speed); bedroom.lights(power,brightness); bedroom.rgb(power,brightness,color).",
+    "Capabilities: bedroom.ac(power,temperature,mode,fanSpeed); hall.ac(power); bedroom.fan(power,speed); bedroom.lights(power,brightness); bedroom.rgb(power,brightness,color).",
     JSON.stringify(devices, null, 2),
     "Use this state for status answers, pronouns, and relative adjustments. After tools run, prefer tool results over any earlier snapshot in this turn.",
     ...(unavailable.length > 0

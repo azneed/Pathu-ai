@@ -175,6 +175,16 @@ export function haStateToRgbState(haState: HaEntityState): RgbState {
   return { power, brightness, color };
 }
 
+export function haStateToHallAcState(haState: HaEntityState): AcState {
+  return {
+    power: "off",
+    temperature: 24,
+    mode: "cool",
+    fanSpeed: 2,
+    powerStateUnconfirmed: true,
+  };
+}
+
 /** Throws DeviceUnavailableError for HA `unavailable` / `unknown` instead of guessing a power state. */
 export function haStateToDeviceState(deviceId: DeviceId, haState: HaEntityState): DeviceState {
   if (UNAVAILABLE_STATES.has(haState.state)) {
@@ -183,6 +193,8 @@ export function haStateToDeviceState(deviceId: DeviceId, haState: HaEntityState)
   switch (deviceId) {
     case "bedroom.ac":
       return haStateToAcState(haState);
+    case "hall.ac":
+      return haStateToHallAcState(haState);
     case "bedroom.fan":
       return haStateToFanState(haState);
     case "bedroom.lights":
@@ -357,6 +369,38 @@ function lightCalls(
   return [{ domain: "light", service: "turn_on", serviceData }];
 }
 
+function hallAcCalls(
+  deviceId: DeviceId,
+  entityId: string,
+  command: AcCommand,
+): ServiceCallSpec[] {
+  const unsupported = (["temperature", "mode", "fanSpeed"] as const).filter(
+    (key) => command[key] !== undefined,
+  );
+  if (unsupported.length > 0) {
+    throw new DeviceCommandError(
+      deviceId,
+      `Hall AC only supports power ON/OFF in this version (cannot set ${unsupported.join(", ")})`,
+    );
+  }
+
+  if (command.power !== "on" && command.power !== "off") {
+    throw new DeviceCommandError(deviceId, "Hall AC command requires power to be 'on' or 'off'");
+  }
+
+  return [
+    {
+      domain: "remote",
+      service: "send_command",
+      serviceData: {
+        entity_id: entityId,
+        device: "Air conditioner - Hall",
+        command: "power",
+      },
+    },
+  ];
+}
+
 /**
  * Translate a validated Pathu command into Home Assistant service calls, using the entity's
  * current state for its capabilities. Throws DeviceCommandError for unsupported or contradictory
@@ -371,6 +415,8 @@ export function commandToServiceCalls(
   switch (deviceId) {
     case "bedroom.ac":
       return acCalls(deviceId, entityId, command as AcCommand, current);
+    case "hall.ac":
+      return hallAcCalls(deviceId, entityId, command as AcCommand);
     case "bedroom.fan":
       return fanCalls(deviceId, entityId, command as FanCommand, current);
     case "bedroom.lights":

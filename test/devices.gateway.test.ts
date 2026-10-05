@@ -32,6 +32,7 @@ describe("DeviceGateway", () => {
       "bedroom.fan",
       "bedroom.lights",
       "bedroom.rgb",
+      "hall.ac",
     ]);
   });
 

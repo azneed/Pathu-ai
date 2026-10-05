@@ -104,7 +104,7 @@ export const toolDefinitions: ToolDefinition[] = [
   {
     name: "get_devices",
     description:
-      "Return authoritative current state for all bedroom devices: bedroom.ac, bedroom.fan, bedroom.lights, bedroom.rgb. Prefer the provided CURRENT DEVICE STATE snapshot for simple status questions; use this tool if you need an explicit refresh.",
+      "Return authoritative current state for all devices: bedroom.ac, bedroom.fan, bedroom.lights, bedroom.rgb, hall.ac. Prefer the provided CURRENT DEVICE STATE snapshot for simple status questions; use this tool if you need an explicit refresh.",
     parameters: {
       type: "object",
       properties: {},
@@ -114,10 +114,15 @@ export const toolDefinitions: ToolDefinition[] = [
   {
     name: "set_ac",
     description:
-      "Control bedroom.ac (air conditioner only) immediately. Use for cooling/heating the room temperature. Not the standalone fan. For future/delayed changes use create_task.",
+      "Control an air conditioner (bedroom.ac or hall.ac) immediately. For hall.ac, power commands emit a BroadLink IR toggle signal (physical state is unconfirmed; LLM must state that an IR power toggle signal was sent rather than claiming confirmed physical state).",
     parameters: {
       type: "object",
       properties: {
+        device: {
+          type: "string",
+          enum: ["bedroom.ac", "hall.ac"],
+          description: "Target AC device (default: bedroom.ac). Use hall.ac for the Hall AC.",
+        },
         power: {
           type: "string",
           enum: ["on", "off"],
@@ -398,8 +403,10 @@ export async function executeTool(
       return ctx.gateway.getAll();
 
     case "set_ac": {
-      const command = setAcSchema.parse(args);
-      return ctx.gateway.set("bedroom.ac", command);
+      const parsed = setAcSchema.parse(args);
+      const targetId = parsed.device ?? parsed.deviceId ?? "bedroom.ac";
+      const { device: _d, deviceId: _id, ...command } = parsed;
+      return ctx.gateway.set(targetId, command);
     }
 
     case "set_fan": {

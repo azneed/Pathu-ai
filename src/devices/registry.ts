@@ -6,6 +6,7 @@ export function createRegistry(adapter: DeviceAdapter): Map<DeviceId, DeviceReco
     { id: "bedroom.fan", kind: "fan", adapter },
     { id: "bedroom.lights", kind: "lights", adapter },
     { id: "bedroom.rgb", kind: "rgb", adapter },
+    { id: "hall.ac", kind: "ac", adapter },
   ];
 
   return new Map(entries.map((entry) => [entry.id, entry]));

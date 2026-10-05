@@ -5,6 +5,7 @@ export const DEFAULT_DEVICE_TO_ENTITY_MAP: Record<DeviceId, string> = {
   "bedroom.fan": "fan.bedroom_fan",
   "bedroom.lights": "light.bedroom_lights",
   "bedroom.rgb": "light.bedroom_rgb",
+  "hall.ac": "remote.pathu",
 };
 
 /** Home Assistant domain each canonical device must map to. */
@@ -13,6 +14,7 @@ export const EXPECTED_DOMAIN: Record<DeviceId, string> = {
   "bedroom.fan": "fan",
   "bedroom.lights": "light",
   "bedroom.rgb": "light",
+  "hall.ac": "remote",
 };
 
 /** The only services Pathu may call, per domain. */
@@ -20,6 +22,7 @@ export const ALLOWED_SERVICES: Record<string, readonly string[]> = {
   climate: ["turn_on", "turn_off", "set_hvac_mode", "set_temperature", "set_fan_mode"],
   fan: ["turn_on", "turn_off"],
   light: ["turn_on", "turn_off"],
+  remote: ["send_command", "turn_on", "turn_off"],
 };
 
 const ENTITY_ID = /^[a-z_]+\.[a-z0-9_]+$/;

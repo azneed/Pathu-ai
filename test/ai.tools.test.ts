@@ -55,6 +55,7 @@ describe("tools", () => {
       "bedroom.fan",
       "bedroom.lights",
       "bedroom.rgb",
+      "hall.ac",
     ]);
   });
 

@@ -3,6 +3,7 @@ export const DEVICE_IDS = [
   "bedroom.fan",
   "bedroom.lights",
   "bedroom.rgb",
+  "hall.ac",
 ] as const;
 
 export type DeviceId = (typeof DEVICE_IDS)[number];
@@ -16,6 +17,8 @@ export interface AcState {
   temperature: number;
   mode: AcMode;
   fanSpeed: number;
+  /** True for devices controlled via single-button IR toggle without state feedback. */
+  powerStateUnconfirmed?: boolean;
 }
 
 export interface FanState {
@@ -100,6 +103,13 @@ export const DEFAULT_STATES: Record<DeviceId, DeviceState> = {
     power: "off",
     brightness: 100,
     color: { r: 255, g: 255, b: 255 },
+  },
+  "hall.ac": {
+    power: "off",
+    temperature: 24,
+    mode: "cool",
+    fanSpeed: 2,
+    powerStateUnconfirmed: true,
   },
 };
 
