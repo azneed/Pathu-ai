@@ -30,6 +30,16 @@ services:
         sync: false
       - key: AUDIUS_API_KEY
         sync: false
+      # Smart-home backend: simulated (default) or homeassistant. Home Assistant must be reachable
+      # from Render over the internet (e.g. Nabu Casa or a tunnel); a LAN address will not work.
+      - key: DEVICE_BACKEND
+        value: simulated
+      - key: HOME_ASSISTANT_URL
+        sync: false
+      - key: HOME_ASSISTANT_TOKEN
+        sync: false
+      - key: HOME_ASSISTANT_TIMEOUT_MS
+        value: "5000"
       # SQLite lives on the instance filesystem, which is ephemeral on Render unless a persistent
       # disk is attached (paid plans), e.g. mount at /var/data and set DATABASE_PATH=/var/data/andru.db.
       - key: DATABASE_PATH

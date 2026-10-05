@@ -1,6 +1,6 @@
 import { serve } from "@hono/node-server";
 import { createLLMProvider } from "./ai/createLLMProvider.js";
-import { loadConfig, type Config } from "./config.js";
+import { findLegacyHomeAssistantVars, loadConfig, type Config } from "./config.js";
 import { openDb } from "./db/index.js";
 import { Gateway } from "./devices/gateway.js";
 import { createRegistry } from "./devices/registry.js";
@@ -66,6 +66,13 @@ export function startServer() {
       console.log(
         `Audius API: ${config.AUDIUS_API_KEY ? "configured" : "not configured"}`,
       );
+      console.log(`Device backend: ${config.DEVICE_BACKEND}`);
+      const legacyVars = findLegacyHomeAssistantVars();
+      if (legacyVars.length > 0) {
+        console.warn(
+          `Ignoring ${legacyVars.join(", ")}: use DEVICE_BACKEND=homeassistant with HOME_ASSISTANT_URL and HOME_ASSISTANT_TOKEN.`,
+        );
+      }
       if (config.AI_PRIMARY === "gemini" && !config.GEMINI_API_KEY) {
         console.warn(
           "GEMINI_API_KEY is missing: primary Gemini calls will fail (fallback may still work).",

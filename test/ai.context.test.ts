@@ -45,7 +45,7 @@ describe("Phase 1 conversation context", () => {
   it("injects current device state into the LLM context", async () => {
     const stack = createStack();
     db = stack.db;
-    stack.gateway.set("bedroom.ac", { power: "on", temperature: 22 });
+    await stack.gateway.set("bedroom.ac", { power: "on", temperature: 22 });
 
     const provider = new CaptureProvider([
       {
@@ -72,9 +72,10 @@ describe("Phase 1 conversation context", () => {
     );
     expect(stateMessage?.content).toContain('"temperature": 22');
     expect(stateMessage?.content).toContain("bedroom.ac");
-    expect(formatDeviceStateContext(stack.gateway.getAll())).toContain(
-      "authoritative ground truth",
-    );
+    const context = formatDeviceStateContext(await stack.gateway.getAll());
+    expect(context).toContain("authoritative ground truth");
+    expect(context).toContain('"temperature": 22');
+    expect(context).not.toContain("Unavailable right now");
   });
 
   it("includes prior turns so follow-ups can resolve pronouns", async () => {

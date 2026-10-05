@@ -65,10 +65,18 @@ export const SYSTEM_PROMPT = buildSystemPrompt(
 export function formatDeviceStateContext(
   devices: Record<string, unknown>,
 ): string {
+  const unavailable = Object.entries(devices)
+    .filter(([, state]) => (state as { status?: unknown } | null)?.status === "unavailable")
+    .map(([id]) => id);
   return [
     "CURRENT DEVICE STATE (authoritative ground truth for this turn):",
     "Capabilities: bedroom.ac(power,temperature,mode,fanSpeed); bedroom.fan(power,speed); bedroom.lights(power,brightness); bedroom.rgb(power,brightness,color).",
     JSON.stringify(devices, null, 2),
     "Use this state for status answers, pronouns, and relative adjustments. After tools run, prefer tool results over any earlier snapshot in this turn.",
+    ...(unavailable.length > 0
+      ? [
+          `Unavailable right now: ${unavailable.join(", ")}. Their state is unknown: do not guess it, tell the user if they ask, and expect control attempts to fail. Other requests are unaffected.`,
+        ]
+      : []),
   ].join("\n");
 }

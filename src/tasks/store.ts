@@ -95,10 +95,12 @@ export function prepareTaskStatements(sqlite: {
       SET status = ?, canceled_at = ?, last_error = ?
       WHERE id = ?
     `),
+    // Run completion only applies to a task that is still running: a cancel that lands while
+    // device calls are awaited must not be overwritten by the later completion path.
     updateTaskAfterRun: sqlite.prepare(`
       UPDATE tasks
       SET status = ?, result_json = ?, last_error = ?, completed_at = ?
-      WHERE id = ?
+      WHERE id = ? AND status = 'running'
     `),
     rescheduleRecurring: sqlite.prepare(`
       UPDATE tasks
@@ -108,7 +110,7 @@ export function prepareTaskStatements(sqlite: {
           last_error = NULL,
           completed_at = ?,
           canceled_at = NULL
-      WHERE id = ?
+      WHERE id = ? AND status = 'running'
     `),
   };
 }

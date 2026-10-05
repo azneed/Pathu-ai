@@ -42,9 +42,30 @@ export type LightsCommand = Partial<LightsState>;
 export type RgbCommand = Partial<RgbState>;
 export type DeviceCommand = AcCommand | FanCommand | LightsCommand | RgbCommand;
 
+/** Snapshot entry for a device whose state could not be read right now. */
+export interface UnavailableDevice {
+  status: "unavailable";
+}
+
+export type DeviceSnapshotEntry = DeviceState | UnavailableDevice;
+export type DeviceSnapshot = Record<DeviceId, DeviceSnapshotEntry>;
+
+export function isUnavailableDevice(
+  entry: DeviceSnapshotEntry,
+): entry is UnavailableDevice {
+  return (entry as Partial<UnavailableDevice>).status === "unavailable";
+}
+
 export interface DeviceAdapter {
   get(id: DeviceId): Promise<DeviceState>;
   set(id: DeviceId, command: DeviceCommand): Promise<DeviceState>;
+  /**
+   * Optional batched read. Devices that cannot be read are returned as unavailable (or omitted);
+   * a rejected promise marks every requested device unavailable.
+   */
+  getMany?(
+    ids: readonly DeviceId[],
+  ): Promise<Partial<Record<DeviceId, DeviceSnapshotEntry>>>;
 }
 
 export interface DeviceRecord {
@@ -56,7 +77,8 @@ export interface DeviceRecord {
 export interface DeviceGateway {
   get(id: DeviceId): Promise<DeviceState>;
   set(id: DeviceId, command: DeviceCommand): Promise<DeviceState>;
-  getAll(): Promise<Record<DeviceId, DeviceState>>;
+  /** Never rejects because of a device backend failure; unreadable devices are unavailable. */
+  getAll(): Promise<DeviceSnapshot>;
 }
 
 export const DEFAULT_STATES: Record<DeviceId, DeviceState> = {

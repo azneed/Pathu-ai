@@ -1,5 +1,9 @@
 import type { Db } from "../db/index.js";
-import type { DeviceGateway, DeviceId, DeviceState } from "../devices/types.js";
+import {
+  DEVICE_IDS,
+  type DeviceGateway,
+  type DeviceSnapshot,
+} from "../devices/types.js";
 import type { ClientAction } from "../youtube/clientActions.js";
 import { parseClientAction } from "../youtube/clientActions.js";
 import { selectRecentHistory } from "./history.js";
@@ -10,9 +14,13 @@ import { executeTool, toolDefinitions } from "./tools.js";
 const DEFAULT_SESSION_ID = "default";
 const MAX_TOOL_ROUNDS = 5;
 
+/** Tools after which the device snapshot is re-read (even on failure: a step may have applied). */
+const STATE_CHANGING_TOOLS = new Set(["set_ac", "set_fan", "set_lights", "set_rgb", "run_routine"]);
+
 export interface ChatResult {
   reply: string;
-  devices: Record<DeviceId, DeviceState>;
+  /** Devices that could not be read are `{ status: "unavailable" }`. */
+  devices: DeviceSnapshot;
   toolTrace: Array<{
     name: string;
     arguments: Record<string, unknown>;
@@ -34,18 +42,30 @@ function extractClientAction(result: unknown): ClientAction | null {
   return parseClientAction(maybe);
 }
 
-async function buildProviderMessages(options: {
-  gateway: DeviceGateway;
+/** A device backend failure must not fail the chat turn: unreadable devices become unavailable. */
+async function readDeviceSnapshot(gateway: DeviceGateway): Promise<DeviceSnapshot> {
+  try {
+    return await gateway.getAll();
+  } catch {
+    console.warn("[chat] device snapshot failed; continuing with all devices unavailable");
+    const snapshot = {} as DeviceSnapshot;
+    for (const id of DEVICE_IDS) snapshot[id] = { status: "unavailable" };
+    return snapshot;
+  }
+}
+
+function buildProviderMessages(options: {
+  devices: DeviceSnapshot;
   history: ChatMessage[];
   userMessage: ChatMessage;
   inTurn: ChatMessage[];
   timeZone: string;
-}): Promise<ChatMessage[]> {
+}): ChatMessage[] {
   return [
     { role: "system", content: buildSystemPrompt(options.timeZone) },
     {
       role: "system",
-      content: formatDeviceStateContext(await options.gateway.getAll()),
+      content: formatDeviceStateContext(options.devices),
     },
     ...selectRecentHistory(options.history),
     options.userMessage,
@@ -97,10 +117,12 @@ export async function runChat(options: {
     audiusApiKey: options.audiusApiKey ?? "",
   };
 
-  const finish = async (reply: string): Promise<ChatResult> => {
+  let devices = await readDeviceSnapshot(options.gateway);
+
+  const finish = (reply: string): ChatResult => {
     const result: ChatResult = {
       reply,
-      devices: await options.gateway.getAll(),
+      devices,
       toolTrace,
       provider: lastProvider,
       model: lastModel,
@@ -115,8 +137,8 @@ export async function runChat(options: {
   while (rounds < MAX_TOOL_ROUNDS) {
     rounds += 1;
 
-    const providerMessages = await buildProviderMessages({
-      gateway: options.gateway,
+    const providerMessages = buildProviderMessages({
+      devices,
       history,
       userMessage,
       inTurn,
@@ -143,12 +165,19 @@ export async function runChat(options: {
 
     const toolCalls = assistantMessage.toolCalls ?? [];
     if (toolCalls.length === 0) {
-      return await finish(assistantMessage.content?.trim() || "Done.");
+      return finish(assistantMessage.content?.trim() || "Done.");
     }
 
+    let devicesStale = false;
     for (const call of toolCalls) {
+      if (STATE_CHANGING_TOOLS.has(call.name)) {
+        devicesStale = true;
+      }
       try {
         const result = await executeTool(call.name, call.arguments, toolContext);
+        if (call.name === "get_devices") {
+          devices = result as DeviceSnapshot;
+        }
         toolTrace.push({
           name: call.name,
           arguments: call.arguments,
@@ -184,9 +213,12 @@ export async function runChat(options: {
         inTurn.push(toolMessage);
       }
     }
+    if (devicesStale) {
+      devices = await readDeviceSnapshot(options.gateway);
+    }
   }
 
-  return await finish(
+  return finish(
     "I had trouble completing that request after several tool steps.",
   );
 }

@@ -85,24 +85,86 @@ const envSchema = z.object({
     .max(86_400)
     .default(300),
 
-  /** Home Assistant REST API base URL (e.g. http://localhost:8123) */
-  HOMEASSISTANT_BASE_URL: z
-    .string()
-    .default("http://localhost:8123")
-    .transform((value) => value.trim()),
+  /** Smart-home backend. Never switches implicitly; "homeassistant" requires URL + token. */
+  DEVICE_BACKEND: z.preprocess(
+    blankToUndefined,
+    z.enum(["simulated", "homeassistant"]).default("simulated"),
+  ),
 
-  /** Home Assistant Long-Lived Access Token. Empty = fall back to SimulatedAdapter */
-  HOMEASSISTANT_TOKEN: z
-    .string()
-    .optional()
-    .default("")
-    .transform((value) => value.trim()),
+  /** Home Assistant base URL, e.g. http://homeassistant.local:8123 (trailing slash removed). */
+  HOME_ASSISTANT_URL: z.preprocess(
+    blankToUndefined,
+    z
+      .string()
+      .refine(isPlainHttpUrl, {
+        message:
+          "must be an http(s) URL without credentials, query or fragment, e.g. http://homeassistant.local:8123",
+      })
+      .transform((value) => value.replace(/\/+$/, ""))
+      .optional(),
+  ),
+
+  /** Home Assistant long-lived access token. Never logged. */
+  HOME_ASSISTANT_TOKEN: z.preprocess(blankToUndefined, z.string().optional()),
+
+  /** Per-request timeout for Home Assistant calls (whole request + response). */
+  HOME_ASSISTANT_TIMEOUT_MS: z.preprocess(
+    blankToUndefined,
+    z.coerce
+      .number()
+      .int()
+      .positive()
+      .max(60_000)
+      .default(5000),
+  ),
 });
 
-export type Config = z.infer<typeof envSchema>;
+function blankToUndefined(value: unknown): unknown {
+  if (typeof value !== "string") return value;
+  const trimmed = value.trim();
+  return trimmed === "" ? undefined : trimmed;
+}
+
+function isPlainHttpUrl(value: string): boolean {
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    return false;
+  }
+  return (
+    (url.protocol === "http:" || url.protocol === "https:") &&
+    url.username === "" &&
+    url.password === "" &&
+    url.search === "" &&
+    url.hash === ""
+  );
+}
+
+const configSchema = envSchema.superRefine((config, ctx) => {
+  if (config.DEVICE_BACKEND !== "homeassistant") return;
+  for (const key of ["HOME_ASSISTANT_URL", "HOME_ASSISTANT_TOKEN"] as const) {
+    if (!config[key]) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [key],
+        message: "is required when DEVICE_BACKEND=homeassistant",
+      });
+    }
+  }
+});
+
+export type Config = z.infer<typeof configSchema>;
+
+/** Pre-release Home Assistant variable names; they are ignored and only produce a warning. */
+export const LEGACY_HOME_ASSISTANT_VARS = ["HOMEASSISTANT_BASE_URL", "HOMEASSISTANT_TOKEN"] as const;
+
+export function findLegacyHomeAssistantVars(env: NodeJS.ProcessEnv = process.env): string[] {
+  return LEGACY_HOME_ASSISTANT_VARS.filter((key) => (env[key] ?? "").trim() !== "");
+}
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
-  const result = envSchema.safeParse(env);
+  const result = configSchema.safeParse(env);
   if (!result.success) {
     const details = result.error.issues
       .map((issue) => `${issue.path.join(".")}: ${issue.message}`)

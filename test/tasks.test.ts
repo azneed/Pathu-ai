@@ -7,6 +7,7 @@ import { openDb, type Db } from "../src/db/index.js";
 import { Gateway } from "../src/devices/gateway.js";
 import { createRegistry } from "../src/devices/registry.js";
 import { SimulatedAdapter } from "../src/devices/simulated.js";
+import type { DeviceAdapter, DeviceCommand, DeviceId, DeviceState } from "../src/devices/types.js";
 import { TaskScheduler } from "../src/tasks/scheduler.js";
 import { nextOccurrence, parseDueAt } from "../src/tasks/time.js";
 
@@ -436,4 +437,79 @@ describe("TaskScheduler", () => {
     expect(await stack.gateway.get("bedroom.lights")).toMatchObject({ power: "off" });
     expect(stack.db.tasks.list({ status: "completed" })).toHaveLength(1);
   });
+});
+
+/** Wraps the simulated adapter so a test can hold `set` open, like a slow real device. */
+class GatedAdapter implements DeviceAdapter {
+  private release: (() => void) | null = null;
+  readonly entered: Promise<void>;
+  private signalEntered!: () => void;
+
+  constructor(private readonly inner: DeviceAdapter) {
+    this.entered = new Promise((resolve) => (this.signalEntered = resolve));
+  }
+
+  get(id: DeviceId): Promise<DeviceState> {
+    return this.inner.get(id);
+  }
+
+  async set(id: DeviceId, command: DeviceCommand): Promise<DeviceState> {
+    await new Promise<void>((resolve) => {
+      this.release = resolve;
+      this.signalEntered();
+    });
+    return this.inner.set(id, command);
+  }
+
+  finish(): void {
+    this.release?.();
+  }
+}
+
+describe("task cancellation while device calls are in flight", () => {
+  let db: Db;
+
+  afterEach(() => {
+    db?.close();
+  });
+
+  function gatedStack() {
+    const dir = mkdtempSync(join(tmpdir(), "andru-tasks-race-"));
+    db = openDb(join(dir, "test.db"), { timeZone: "UTC" });
+    const adapter = new GatedAdapter(new SimulatedAdapter(db));
+    const gateway = new Gateway(createRegistry(adapter));
+    return { adapter, gateway };
+  }
+
+  it.each(["delayed", "recurring"] as const)(
+    "a %s task canceled mid-run stays canceled after the device call completes",
+    async (type) => {
+      const { adapter, gateway } = gatedStack();
+      const task = db.tasks.create({
+        type,
+        description: "AC on",
+        dueAt: "2026-09-19T12:00:00.000Z",
+        recurrence: type === "recurring" ? { frequency: "daily", hour: 12, minute: 0 } : undefined,
+        sessionId: "default",
+        actions: [{ tool: "set_ac", arguments: { power: "on" } }],
+      });
+
+      const running = db.tasks.execute(task.id, gateway);
+      await adapter.entered;
+      expect(db.tasks.get(task.id)?.status).toBe("running");
+
+      const canceled = db.tasks.cancel(task.id);
+      expect(canceled.status).toBe("canceled");
+
+      adapter.finish();
+      const returned = await running;
+
+      expect(returned.status).toBe("canceled");
+      const stored = db.tasks.get(task.id)!;
+      expect(stored.status).toBe("canceled");
+      expect(stored.canceledAt).not.toBeNull();
+      expect(stored.completedAt).toBeNull();
+      expect(db.tasks.list({ status: "pending" })).toHaveLength(0);
+    },
+  );
 });
