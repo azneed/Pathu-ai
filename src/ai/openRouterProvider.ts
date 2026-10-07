@@ -1,4 +1,9 @@
 import OpenAI from "openai";
+import {
+  extractCauseMessage,
+  extractErrorStatus,
+  sanitizeForLog,
+} from "./providerCooldown.js";
 import { ProviderError } from "./router.js";
 import type {
   ChatMessage,
@@ -166,28 +171,34 @@ export class OpenRouterProvider implements LLMProvider {
         model: completion.model,
       };
     } catch (error) {
-      if (error instanceof ProviderError) throw error;
+      if (error instanceof ProviderError) {
+        const causeMsg = extractCauseMessage(error);
+        console.error(
+          `[AI] OpenRouter provider error: ${sanitizeForLog(error.message)} | provider: ${error.provider ?? "openrouter"} | status: ${error.status ?? "none"} | recoverable: ${error.recoverable}${causeMsg ? ` | cause: ${sanitizeForLog(causeMsg)}` : ""}`,
+        );
+        throw error;
+      }
       const message = error instanceof Error ? error.message : String(error);
-      const status =
-        typeof error === "object" &&
-        error !== null &&
-        "status" in error &&
-        typeof (error as { status: unknown }).status === "number"
-          ? (error as { status: number }).status
-          : undefined;
-      throw new ProviderError(message, {
-        recoverable:
-          status === 429 ||
-          status === 500 ||
-          status === 502 ||
-          status === 503 ||
-          status === 401 ||
-          status === 403 ||
-          /quota|rate.?limit|timeout|network|api.?key|unavailable/i.test(message),
+      const status = extractErrorStatus(error);
+      const recoverable =
+        status === 429 ||
+        status === 500 ||
+        status === 502 ||
+        status === 503 ||
+        status === 401 ||
+        status === 403 ||
+        /quota|rate.?limit|timeout|network|api.?key|unavailable/i.test(message);
+      const providerError = new ProviderError(message, {
+        recoverable,
         status,
         provider: "openrouter",
         cause: error,
       });
+      const causeMsg = extractCauseMessage(error);
+      console.error(
+        `[AI] OpenRouter provider error: ${sanitizeForLog(message)} | provider: openrouter | status: ${status ?? "none"} | recoverable: ${recoverable}${causeMsg ? ` | cause: ${sanitizeForLog(causeMsg)}` : ""}`,
+      );
+      throw providerError;
     }
   }
 }

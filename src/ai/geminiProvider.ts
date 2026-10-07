@@ -1,4 +1,9 @@
 import { GoogleGenAI } from "@google/genai";
+import {
+  extractCauseMessage,
+  extractErrorStatus,
+  sanitizeForLog,
+} from "./providerCooldown.js";
 import { ProviderError } from "./router.js";
 import type {
   ChatMessage,
@@ -228,16 +233,12 @@ function classifyGeminiError(error: unknown): ProviderError {
 
   const message = error instanceof Error ? error.message : String(error);
   const lower = message.toLowerCase();
-  let status: number | undefined;
-  if (typeof error === "object" && error !== null) {
-    const record = error as Record<string, unknown>;
-    if (typeof record.status === "number") status = record.status;
-    if (typeof record.code === "number") status = record.code;
-  }
-
-  const statusMatch = message.match(/\b([45]\d\d)\b/);
-  if (status === undefined && statusMatch) {
-    status = Number(statusMatch[1]);
+  let status: number | undefined = extractErrorStatus(error);
+  if (status === undefined) {
+    const statusMatch = message.match(/\b([45]\d\d)\b/);
+    if (statusMatch) {
+      status = Number(statusMatch[1]);
+    }
   }
 
   const recoverable =
@@ -313,7 +314,12 @@ export class GeminiProvider implements LLMProvider {
       });
       return fromGeminiResponse(response);
     } catch (error) {
-      throw classifyGeminiError(error);
+      const providerError = classifyGeminiError(error);
+      const causeMsg = extractCauseMessage(error);
+      console.error(
+        `[AI] Gemini provider error: ${sanitizeForLog(providerError.message)} | provider: ${providerError.provider} | status: ${providerError.status ?? "none"} | recoverable: ${providerError.recoverable}${causeMsg ? ` | cause: ${sanitizeForLog(causeMsg)}` : ""}`,
+      );
+      throw providerError;
     }
   }
 }

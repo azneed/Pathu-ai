@@ -79,6 +79,31 @@ export function errorMessage(error: unknown): string {
   return String(error);
 }
 
+export function extractCauseMessage(error: unknown): string | undefined {
+  if (typeof error !== "object" || error === null) return undefined;
+  const record = error as Record<string, unknown>;
+  const cause = record.cause;
+  if (!cause) return undefined;
+  if (cause instanceof Error) {
+    const nestedCause = (cause as Error & { cause?: unknown }).cause;
+    if (
+      nestedCause instanceof Error &&
+      nestedCause.message &&
+      nestedCause.message !== cause.message
+    ) {
+      return `${cause.message} (${nestedCause.message})`;
+    }
+    return cause.message;
+  }
+  if (typeof cause === "object" && cause !== null && "message" in cause) {
+    return String((cause as { message: unknown }).message);
+  }
+  if (typeof cause === "string") {
+    return cause;
+  }
+  return undefined;
+}
+
 /**
  * Transient quota / rate-limit failures that should trigger a cooldown.
  * Does NOT include generic timeouts or 5xx (those stay recoverable without cooldown).

@@ -1,6 +1,7 @@
 import {
   classifyCooldownReason,
   errorMessage,
+  extractCauseMessage,
   extractErrorStatus,
   isCooldownTriggerError,
   ProviderCooldownRegistry,
@@ -162,6 +163,18 @@ export class ProviderRouter implements LLMProvider {
         primaryMessage = errorText(primaryError);
         this.maybeEnterCooldown(this.primary.name, primaryError);
 
+        const status = extractStatus(primaryError);
+        const recoverable = isRecoverableProviderError(primaryError);
+        const providerName =
+          primaryError instanceof ProviderError && primaryError.provider
+            ? primaryError.provider
+            : this.primary.name;
+        const causeMsg = extractCauseMessage(primaryError);
+
+        console.error(
+          `[AI] ${displayName(this.primary.name)} primary failure: ${sanitizeForLog(primaryMessage)} | provider: ${providerName} | status: ${status ?? "none"} | recoverable: ${recoverable}${causeMsg ? ` | cause: ${sanitizeForLog(causeMsg)}` : ""}`,
+        );
+
         if (!this.fallback || !isRecoverableProviderError(primaryError)) {
           throw primaryError instanceof ProviderError
             ? primaryError
@@ -207,6 +220,15 @@ export class ProviderRouter implements LLMProvider {
     } catch (fallbackError) {
       const fallbackMessage = errorText(fallbackError);
       this.maybeEnterCooldown(fallback.name, fallbackError);
+
+      const status = extractStatus(fallbackError);
+      const recoverable = isRecoverableProviderError(fallbackError);
+      const causeMsg = extractCauseMessage(fallbackError);
+
+      console.error(
+        `[AI] ${displayName(fallback.name)} fallback failure: ${sanitizeForLog(fallbackMessage)} | status: ${status ?? "none"} | recoverable: ${recoverable}${causeMsg ? ` | cause: ${sanitizeForLog(causeMsg)}` : ""}`,
+      );
+
       throw new ProviderError(
         `Primary (${this.primary.name}) and fallback (${fallback.name}) failed. Primary: ${sanitizeForLog(primaryMessage)}; Fallback: ${sanitizeForLog(fallbackMessage)}`,
         {

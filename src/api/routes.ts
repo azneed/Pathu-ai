@@ -14,6 +14,7 @@ import { resetMusicSession } from "../music/session.js";
 import { DEVICE_ACTION_TOOLS } from "../tasks/types.js";
 import { resetYoutubeSession } from "../youtube/session.js";
 import { apiAuth } from "./auth.js";
+import { sanitizeForLog } from "../ai/providerCooldown.js";
 
 const chatBodySchema = z.object({
   message: z.string().trim().min(1, "message is required"),
@@ -269,7 +270,7 @@ export function createApp(deps: AppDeps): Hono {
       return c.json(result);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      console.error("chat error:", message);
+      console.error(`[AI] Final chat failure: ${sanitizeForLog(message)}`);
       return c.json({ error: "Chat failed", details: message }, 500);
     }
   });
