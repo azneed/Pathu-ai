@@ -154,8 +154,9 @@ export class OpenRouterProvider implements LLMProvider {
       const completion = await this.client.chat.completions.create({
         model: this.model,
         messages: toOpenRouterMessages(input.messages),
-        tools: toOpenAiTools(input.tools),
-        tool_choice: "auto",
+        ...(input.tools.length > 0
+          ? { tools: toOpenAiTools(input.tools), tool_choice: "auto" as const }
+          : {}),
       });
 
       const choice = completion.choices[0]?.message;

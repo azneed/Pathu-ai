@@ -6,6 +6,7 @@ import {
 } from "../devices/types.js";
 import type { ClientAction } from "../youtube/clientActions.js";
 import { parseClientAction } from "../youtube/clientActions.js";
+import { detectFastDeviceAction, runFastDeviceAction } from "./fastDeviceAction.js";
 import { selectRecentHistory } from "./history.js";
 import { buildSystemPrompt, formatDeviceStateContext } from "./prompt.js";
 import type { ChatMessage, LLMProvider } from "./types.js";
@@ -116,6 +117,22 @@ export async function runChat(options: {
     youtubeApiKey: options.youtubeApiKey ?? "",
     audiusApiKey: options.audiusApiKey ?? "",
   };
+
+  const fastAction = detectFastDeviceAction(options.message);
+  if (fastAction) {
+    console.log(
+      `[chat] fast device action: ${fastAction.tool} ${fastAction.deviceId} power=${fastAction.power}`,
+    );
+    return runFastDeviceAction(fastAction, {
+      provider: options.provider,
+      toolContext,
+      history,
+      userMessage,
+      timeZone,
+      readSnapshot: () => readDeviceSnapshot(options.gateway),
+      persist: (message) => options.db.appendMessage(sessionId, message),
+    });
+  }
 
   let devices = await readDeviceSnapshot(options.gateway);
 

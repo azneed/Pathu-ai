@@ -308,7 +308,7 @@ export class GeminiProvider implements LLMProvider {
         contents,
         config: {
           systemInstruction,
-          tools: toGeminiTools(input.tools),
+          ...(input.tools.length > 0 ? { tools: toGeminiTools(input.tools) } : {}),
           automaticFunctionCalling: { disable: true },
         },
       });

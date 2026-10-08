@@ -188,7 +188,7 @@ export class OllamaProvider implements LLMProvider {
         body: JSON.stringify({
           model: this.options.model,
           messages: toOllamaMessages(input.messages),
-          tools: toOllamaTools(input.tools),
+          ...(input.tools.length > 0 ? { tools: toOllamaTools(input.tools) } : {}),
           stream: false,
         }),
         signal: controller.signal,

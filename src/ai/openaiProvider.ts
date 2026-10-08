@@ -96,8 +96,9 @@ export class OpenAIProvider implements LLMProvider {
       const completion = await this.client.chat.completions.create({
         model: this.model,
         messages: toOpenAiMessages(input.messages),
-        tools: toOpenAiTools(input.tools),
-        tool_choice: "auto",
+        ...(input.tools.length > 0
+          ? { tools: toOpenAiTools(input.tools), tool_choice: "auto" as const }
+          : {}),
       });
 
       const choice = completion.choices[0]?.message;
