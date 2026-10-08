@@ -23,8 +23,21 @@ const envSchema = z.object({
     .string()
     .default("https://openrouter.ai/api/v1"),
 
-  OLLAMA_BASE_URL: z.string().default("http://127.0.0.1:11434"),
-  OLLAMA_MODEL: z.string().default("llama3.2"),
+  /** Local or remote Ollama server root, e.g. http://127.0.0.1:11434 (trailing slash removed). */
+  OLLAMA_BASE_URL: z.preprocess(
+    blankToUndefined,
+    z
+      .string()
+      .default("http://127.0.0.1:11434")
+      .transform((value) => value.replace(/\/+$/, "")),
+  ),
+  OLLAMA_MODEL: z.preprocess(blankToUndefined, z.string().default("llama3.2")),
+  /** Optional bearer token for an authenticating proxy in front of a remote Ollama. Never logged. */
+  OLLAMA_API_KEY: z
+    .string()
+    .optional()
+    .default("")
+    .transform((value) => value.trim()),
 
   OPENAI_API_KEY: z
     .string()
@@ -142,6 +155,16 @@ function isPlainHttpUrl(value: string): boolean {
 }
 
 const configSchema = envSchema.superRefine((config, ctx) => {
+  const usesOllama = config.AI_PRIMARY === "ollama" || config.AI_FALLBACK === "ollama";
+  if (usesOllama && !isPlainHttpUrl(config.OLLAMA_BASE_URL)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["OLLAMA_BASE_URL"],
+      message:
+        "must be an http(s) URL without credentials, query or fragment, e.g. http://127.0.0.1:11434 (put tokens in OLLAMA_API_KEY)",
+    });
+  }
+
   if (config.DEVICE_BACKEND !== "homeassistant") return;
   for (const key of ["HOME_ASSISTANT_URL", "HOME_ASSISTANT_TOKEN"] as const) {
     if (!config[key]) {

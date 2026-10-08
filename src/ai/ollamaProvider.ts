@@ -162,6 +162,8 @@ export class OllamaProvider implements LLMProvider {
     private readonly options: {
       baseUrl: string;
       model: string;
+      /** Sent as `Authorization: Bearer <apiKey>` when set (e.g. an authenticating reverse proxy). */
+      apiKey?: string;
       fetchImpl?: OllamaFetch;
       timeoutMs?: number;
     },
@@ -184,7 +186,10 @@ export class OllamaProvider implements LLMProvider {
     try {
       const response = await fetchImpl(url, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(this.options.apiKey ? { Authorization: `Bearer ${this.options.apiKey}` } : {}),
+        },
         body: JSON.stringify({
           model: this.options.model,
           messages: toOllamaMessages(input.messages),
@@ -200,9 +205,11 @@ export class OllamaProvider implements LLMProvider {
           `Ollama HTTP ${response.status}${body ? `: ${body}` : ""}`,
           {
             recoverable:
+              response.status === 401 ||
+              response.status === 403 ||
+              response.status === 404 ||
               response.status === 429 ||
-              response.status >= 500 ||
-              response.status === 404,
+              response.status >= 500,
             status: response.status,
             provider: "ollama",
           },

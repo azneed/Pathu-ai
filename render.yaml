@@ -26,6 +26,13 @@ services:
         sync: false
       - key: OPENROUTER_API_KEY
         sync: false
+      # Remote Ollama, used only when AI_PRIMARY or AI_FALLBACK is "ollama"; set in the dashboard.
+      - key: OLLAMA_BASE_URL
+        sync: false
+      - key: OLLAMA_MODEL
+        sync: false
+      - key: OLLAMA_API_KEY
+        sync: false
       - key: YOUTUBE_API_KEY
         sync: false
       - key: AUDIUS_API_KEY

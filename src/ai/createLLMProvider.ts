@@ -39,6 +39,7 @@ function createNamedProvider(
         provider: new OllamaProvider({
           baseUrl: config.OLLAMA_BASE_URL,
           model: config.OLLAMA_MODEL,
+          apiKey: config.OLLAMA_API_KEY,
         }),
       };
     case "openai":
